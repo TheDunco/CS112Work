@@ -1,0 +1,10 @@
+Lab 03
+
+Errors
+Vec::operator= : memory leak if mySize > 0 and original.mySize == 0 
+
+Feedback
+none
+
+Grade
+92%

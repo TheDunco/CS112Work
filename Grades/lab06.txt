@@ -1,0 +1,12 @@
+Lab 06
+
+Errors
+experiment 1: question 1 : incorrect big O
+
+Feedback
+timeAppendToVectorOfSize starts with a full vector. the call to push_back causes the vector to resize and copy n items. So the push_back operation is O(n)
+timeAppendToVectorOfSize is not consistent with timeRepeatedAppendUntilVectorIsSize since the vector does not resize every call. So the push_back operation in this case is O(1)
+appending to a list and vector are both O(1). but a vector occasionally has to resize. so it's O(1) is amortized.
+
+Grade
+92%

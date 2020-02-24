@@ -1,0 +1,405 @@
+Script started on Sat 04 May 2019 10:08:28 PM EDT
+djv78@gold25:~/112/proj10$ ls
+converted_images								       ImageConverter.cpp  main.o
+CS 112 Lab 10: Image Inversion; Duncan Van Keulen, 30 April 2019.ods		       ImageConverter.h    Makefile
+CS 112 Lab 10: Image Inversion; Duncan Van Keulen, 30 April 2019.pdf		       ImageConverter.o    pics
+CS112: Proj10 Mirror and Brightness Operation Times Duncan Van Keulen, 4 May 2019.ods  main		   typescript
+CS112: Proj10 Mirror and Brightness Operation Times Duncan Van Keulen, 4 May 2019.pdf  main.cpp
+djv78@gold25:~/112/proj10$ cd pics/
+djv78@gold25:~/112/proj10/pics$ ls
+beads.jpg  Car-colors.jpg  colorCrayons.jpg  coloredMarkers.jpg  colorfulCars.jpg
+djv78@gold25:~/112/proj10/pics$ cd ../converted_images/
+djv78@gold25:~/112/proj10/converted_images$ ls
+-100.png  +100.png  Mirrored.png  original.png
+djv78@gold25:~/112/proj10/converted_images$ cd ..
+djv78@gold25:~/112/proj10$ cat -b main.cpp 
+     1	/*
+     2	 * main.cpp is a driver for an ImageConverter program
+     3	 *  using OpenMP to parallelize the image processing
+     4	 *  and TSGL to view the processing in near real time.
+     5	 *
+     6	 * Author: Joel Adams, for CS 112 at Calvin College.
+     7	 * Date: March 2015.
+     8	 * Revised: November 2016.
+     9	 */
+
+    10	#include "ImageConverter.h"
+
+    11	int main() {
+    12		omp_set_num_threads(16);
+
+    13		ImageConverter iConverter("pics/colorCrayons.jpg", 800, 800);
+    14		//     iConverter.invertImage();
+    15		//     iConverter.invertImage2();
+    16		//     iConverter.invertImage3();
+    17		iConverter.mirrorVertical();
+    18		iConverter.changeBrightness(0);
+    19	}
+djv78@gold25:~/112/proj10$ cat -b ImageConverter.h
+     1	/*
+     2	 * ImageConverter.h declares a class for
+     3	 *  various image conversion operations.
+     4	 *
+     5	 *  Author:  Joel Adams, CS112 @ Calvin College.
+     6	 *  Created: March 2015
+     7	 *  Revised: November 2016.
+     8	 */
+
+     9	#ifndef IMAGECONVERTER_H_
+    10	#define IMAGECONVERTER_H_
+
+    11	#include <tsgl.h>     // Canvas, ColorInt, etc.
+    12	#include <iostream>   // cout, cerr, ...
+    13	#include <string>     // string
+    14	#include <omp.h>      // OpenMP functions
+    15	#include <cmath> 	  // ceil()
+
+    16	using namespace tsgl;
+    17	using namespace std;
+
+    18	class ImageConverter {
+    19	public:
+    20		ImageConverter(const std::string& imageFileName, int width, int height);
+    21		~ImageConverter();
+
+    22		void invertImage();
+    23		void invertImage2();
+    24		void invertImage3();
+    25		void mirrorVertical();
+    26		void changeBrightness(const int& percent);
+
+    27	private:
+    28	    Canvas      myCanvas1;
+    29	    string      myImageFileName;
+    30	    int         myWidth;
+    31	    int         myHeight;
+    32	};
+
+
+    33	#endif /* IMAGECONVERTER_H_ */
+djv78@gold25:~/112/proj10$ cat -b ImageConverter.cpp 
+     1	/*
+     2	 * ImageConverter.cpp declares a class for
+     3	 *  various image conversion operations.
+     4	 *
+     5	 *  Author:  Joel Adams, CS112 @ Calvin College.
+     6	 *  Created: March 2015
+     7	 *  Revised: November 2016
+     8	 */
+
+     9	#include "ImageConverter.h"
+    10	#include <unistd.h>            // sleep()
+
+    11	//-----------------  Method definitions ------------------------------
+
+    12	/* explicit constructor
+    13	 *
+    14	 * @param imageFileName, a string.
+    15	 * @param width, an int.
+    16	 * @param height, an int.
+    17	 *
+    18	 * Precondition: imageFileName contains the name of a valid image file
+    19	 *               && width > 0 && height > 0
+    20	 * Postcondition: myImageFileName == imageFileName
+    21	 *                && myWidth == width && myHeight = height
+    22	 *                && width x height Canvas containing the image
+    23	 *                    from imageFileName has been displayed on screen.
+    24	 */
+    25	ImageConverter::ImageConverter(const std::string& imageFileName, int width, int height)
+    26	 : myCanvas1(0, 0, width, height, imageFileName),
+    27	   myImageFileName(imageFileName),
+    28	   myWidth(width),
+    29	   myHeight(height)
+    30	{
+    31	    myCanvas1.start();
+    32	    myCanvas1.drawImage(myImageFileName, 0, 0, width, height);
+    33	    sleep(1);
+    34	}
+
+    35	/* destructor
+    36	 *
+    37	 * Precondition: this ImageConverter object is going out of scope.
+    38	 * Postcondition: myCanvas1 has disappeared from the screen.
+    39	 */
+    40	ImageConverter::~ImageConverter() {
+    41	    myCanvas1.wait();
+    42	    cout << "\nImageConverter terminated normally." << endl;
+    43	}
+
+    44	/* invertImage() inverts the image from myImageFileName using the #pragma omp parallel for directive
+    45	 *
+    46	 * Precondition: myCanvas1 contains a TSGL Image that is to be inverted
+    47	 *               && myWidth contains the number of columns in which to display the image
+    48	 *               && myHeight contains the number of rows in which to display the image.
+    49	 *
+    50	 * Postcondition: a myWidth x myHeight Canvas has been displayed
+    51	 *                 containing the inverse of the image from myCanvas1
+    52	 *                 (which contains the image from myImageFileName).
+    53	 */
+    54	void ImageConverter::invertImage() {
+    55		// record the starting time
+    56		double startTime = omp_get_wtime();
+
+    57		Canvas canvas2(myWidth+50, 0, myWidth, myHeight, myImageFileName + " Inverted");
+    58		canvas2.start();
+
+    59	#pragma omp parallel for
+    60		// loop through the image rows
+    61		for (int row = 0; row < myHeight; row++) {
+    62			// slow the processing to simulate a very large image
+    63			canvas2.sleep();
+    64			// loop through the image columns
+    65			for (int col = 0; col < myWidth; col++) {
+    66				// read the pixel at canvas1[row][col]
+    67				ColorInt pixelColor = myCanvas1.getPixel(row, col);
+    68				// compute its inverse
+    69				int invertedR = 255 - pixelColor.R;
+    70				int invertedG = 255 - pixelColor.G;
+    71				int invertedB = 255 - pixelColor.B;
+    72				// draw the inverse at the same spot in canvas2
+    73				canvas2.drawPixel(row, col, ColorInt(invertedR,invertedG,invertedB) );
+    74			} // inner for
+    75		} // outer for
+
+    76		// compute and display the time difference
+    77		double totalTime = omp_get_wtime() - startTime;
+    78		cout << "\n\nImage inversion took "
+    79				<< totalTime << " seconds.\n" << endl;
+
+    80		// save converted image
+    81		canvas2.takeScreenShot();
+
+    82		// wait a second for the other thread to catch up
+    83		canvas2.wait();
+    84	} // invertImage
+
+
+    85	/* invertImage() inverts the image from myImageFileName using the "chunk-size 1" approach
+    86	 *
+    87	 * Precondition: myCanvas1 contains a TSGL Image that is to be inverted
+    88	 *               && myWidth contains the number of columns in which to display the image
+    89	 *               && myHeight contains the number of rows in which to display the image.
+    90	 *
+    91	 * Postcondition: a myWidth x myHeight Canvas has been displayed
+    92	 *                 containing the inverse of the image from myCanvas1
+    93	 *                 (which contains the image from myImageFileName).
+    94	 */
+    95	void ImageConverter::invertImage2() {
+
+    96		Canvas canvas3(myWidth+50, 0, myWidth, myHeight, myImageFileName + " Inverted, Chunk-Size 1");
+    97		canvas3.start();
+
+    98		// launch additional threads
+    99	#pragma omp parallel
+   100		{
+   101			// how many workers do we have?
+   102			unsigned numThreads = omp_get_num_threads();
+   103			// which one am I?
+   104			unsigned id = omp_get_thread_num();
+
+   105			// loop through the image rows
+   106			for (int row = id; row < myHeight; row += numThreads) {
+   107				// slow the processing to simulate a very large image
+   108				canvas3.sleep();
+   109				// loop through the image columns
+   110				for (int col = 0; col < myWidth; col++) {
+   111					// read the pixel at canvas1[row][col]
+   112					ColorInt pixelColor = myCanvas1.getPixel(row, col);
+   113					// compute its inverse
+   114					int invertedR = 255 - pixelColor.R;
+   115					int invertedG = 255 - pixelColor.G;
+   116					int invertedB = 255 - pixelColor.B;
+   117					// draw the inverse at the same spot in canvas2
+   118					canvas3.drawPixel(row, col, ColorInt(invertedR,invertedG,invertedB) );
+   119				} // inner for
+   120			} // outer for
+   121		} // #pragma omp parallel
+
+   122		canvas3.wait();
+   123	} // invertImage2
+
+   124	/* invertImage() inverts the image from myImageFileName using the "equal-sized chunks" approach
+   125	 *
+   126	 * Precondition: myCanvas1 contains a TSGL Image that is to be inverted
+   127	 *               && myWidth contains the number of columns in which to display the image
+   128	 *               && myHeight contains the number of rows in which to display the image.
+   129	 *
+   130	 * Postcondition: a myWidth x myHeight Canvas has been displayed
+   131	 *                 containing the inverse of the image from myCanvas1
+   132	 *                 (which contains the image from myImageFileName).
+   133	 */
+   134	void ImageConverter::invertImage3() {
+
+   135		Canvas canvas4(myWidth+50, 0, myWidth, myHeight, myImageFileName + " Inverted, Equal-Sized Chunks ");
+   136		canvas4.start();
+
+   137		// launch additional threads
+   138	#pragma omp parallel
+   139		{
+   140			// how many workers do we have?
+   141			unsigned numThreads = omp_get_num_threads();
+   142			// which one am I?
+   143			unsigned id = omp_get_thread_num();
+
+   144			// compute size of chunks (iterations % numThreads may != 0)
+   145			double iterations = myHeight;
+   146			unsigned chunkSize = (unsigned)ceil(iterations / numThreads);
+
+   147			// compute starting and stopping index values
+   148			int start = id * chunkSize;
+   149			int stop = 0;
+   150			if (id < numThreads-1) {
+   151				stop = start + chunkSize;
+   152			} else {
+   153				stop = myHeight;
+   154			}
+
+   155			// loop through image rows in equal-sized chunks
+   156			for (int row = start; row < stop; row++) {
+   157				// slow the processing to simulate a very large image
+   158				canvas4.sleep();
+   159				// loop through the image columns
+   160				for (int col = 0; col < myWidth; col++) {
+   161					// read the pixel at canvas1[row][col]
+   162					ColorInt pixelColor = myCanvas1.getPixel(row, col);
+   163					// compute its inverse
+   164					int invertedR = 255 - pixelColor.R;
+   165					int invertedG = 255 - pixelColor.G;
+   166					int invertedB = 255 - pixelColor.B;
+   167					// draw the inverse at the same spot in canvas2
+   168					canvas4.drawPixel(row, col, ColorInt(invertedR,invertedG,invertedB) );
+   169				} // inner for
+   170			} // outer for
+   171		} // #pragma omp parallel
+
+   172		canvas4.wait();
+   173	} // invertImage3
+
+
+   174	/* mirrorVertical() mirrors myImageFileName based on the left side
+   175	 *
+   176	 * Precondition: myCanvas1 contains a TSGL Image that is to be inverted
+   177	 *               && myWidth contains the number of columns in which to display the image
+   178	 *               && myHeight contains the number of rows in which to display the image.
+   179	 *
+   180	 * Postcondition: a myWidth x myHeight Canvas has been displayed
+   181	 *                 containing the mirror of the image from myCanvas1
+   182	 *                 (which contains the image from myImageFileName)
+   183	 *                 && a file containing the converted image will be saved.
+   184	 *
+   185	 * @author: Duncan Van Keulen (project)
+   186	 */
+   187	void ImageConverter::mirrorVertical() {
+   188		// record the starting time
+   189		double startTime = omp_get_wtime();
+
+   190		Canvas canvas5(myWidth+50, 0, myWidth, myHeight, myImageFileName + " Mirrored");
+   191		canvas5.start();
+
+   192		int MIRROR_POINT = myWidth/2;
+
+   193	#pragma omp parallel for
+   194		// loop through the image rows
+   195		for (int row = 0; row < myHeight; row++) {
+   196			// slow the processing to simulate a very large image
+   197			canvas5.sleep();
+   198			// loop through the image columns
+   199			for (int col = 0; col < myWidth/2; col++) {
+   200				// get the "anchor pixel" to the left of the MIRROR_POINT
+   201				ColorInt defaultPixel = myCanvas1.getPixel(row, col);
+   202				// get the same pixel in reverse order to be copied (flipped) to the other side
+   203				ColorInt leftPixel = myCanvas1.getPixel(row, MIRROR_POINT - col);
+
+   204				// re-draw the "anchor pixel"
+   205				canvas5.drawPixel(row, col, ColorInt(defaultPixel.R, defaultPixel.G, defaultPixel.B) );
+   206				// draw that pixel mirrored over the MIRROR_POINT
+   207				canvas5.drawPixel(row, col+MIRROR_POINT, ColorInt(leftPixel.R, leftPixel.G, leftPixel.B) );
+   208			} // inner for
+   209		} // outer for
+
+   210		// compute and display the time difference
+   211		double totalTime = omp_get_wtime() - startTime;
+   212		cout << "\n\nImage inversion took "
+   213				<< totalTime << " seconds.\n" << endl;
+
+   214		// save converted image
+   215		canvas5.takeScreenShot();
+
+   216		// wait a second for the other thread to catch up
+   217		canvas5.wait();
+   218	} // mirrorImage
+
+   219	/* changeBrightness() offsets the color of each pixel according to the...
+   220	 * @param const int& offset: the amount to offset each RGB value by
+   221	 * 						     (negative for darker, positive for brighter)
+   222	 *
+   223	 * Precondition: myCanvas1 contains a TSGL Image that is to be inverted
+   224	 *               && myWidth contains the number of columns in which to display the image
+   225	 *               && myHeight contains the number of rows in which to display the image.
+   226	 *
+   227	 * Postcondition: a myWidth x myHeight Canvas has been displayed
+   228	 *                 containing the image from myCanvas1 with a brightness change
+   229	 *                 (which contains the image from myImageFileName)
+   230	 *                 && a file containing the converted image will be saved.
+   231	 *
+   232	 * @author: Duncan Van Keulen (project)
+   233	 */
+   234	void ImageConverter::changeBrightness(const int& offset) {
+   235		// record the starting time
+   236		double startTime = omp_get_wtime();
+
+   237		Canvas canvas6(myWidth+50, 0, myWidth, myHeight, myImageFileName + " Inverted");
+   238		canvas6.start();
+
+   239	#pragma omp parallel for
+   240		// loop through the image rows
+   241		for (int row = 0; row < myHeight; row++) {
+   242			// slow the processing to simulate a very large image
+   243			canvas6.sleep();
+   244			// loop through the image columns
+   245			for (int col = 0; col < myWidth; col++) {
+   246				// read the pixel at canvas1[row][col]
+   247				ColorInt pixelColor = myCanvas1.getPixel(row, col);
+   248				// compute the offsetted RGB values
+   249				int brightnessChangeR = pixelColor.R + offset;
+   250				int brightnessChangeG = pixelColor.G + offset;
+   251				int brightnessChangeB = pixelColor.B + offset;
+
+   252				// draw the new pixel values to the new canvas
+   253				canvas6.drawPixel(row, col, ColorInt(brightnessChangeR, brightnessChangeG, brightnessChangeB) );
+   254			} // inner for
+   255		} // outer for
+
+   256		// compute and display the time difference
+   257		double totalTime = omp_get_wtime() - startTime;
+   258		cout << "\n\nImage inversion took "
+   259				<< totalTime << " seconds.\n" << endl;
+
+   260		// save converted image
+   261		canvas6.takeScreenShot();
+
+   262		// wait a second for the other thread to catch up
+   263		canvas6.wait();
+   264	} // invertImage
+djv78@gold25:~/112/proj10$ make all
+make: Nothing to be done for 'all'.
+djv78@gold25:~/112/proj10$ ./main   
+
+
+Image inversion took 0.858894 seconds.
+
+
+
+Image inversion took 0.839187 seconds.
+
+
+ImageConverter terminated normally.
+djv78@gold25:~/112/proj10$ ls
+converted_images								       Image000049.png	   main.cpp
+CS 112 Lab 10: Image Inversion; Duncan Van Keulen, 30 April 2019.ods		       ImageConverter.cpp  main.o
+CS 112 Lab 10: Image Inversion; Duncan Van Keulen, 30 April 2019.pdf		       ImageConverter.h    Makefile
+CS112: Proj10 Mirror and Brightness Operation Times Duncan Van Keulen, 4 May 2019.ods  ImageConverter.o    pics
+CS112: Proj10 Mirror and Brightness Operation Times Duncan Van Keulen, 4 May 2019.pdf  main		   typescript
+djv78@gold25:~/112/proj10$ exit
+
+Script done on Sat 04 May 2019 10:11:51 PM EDT

@@ -1,0 +1,1452 @@
+Script started on 2019-03-17 20:07:01-0400
+]0;duncv@duncv-VirtualBox: ~/eclipse-workspace/proj06[01;32mduncv@duncv-VirtualBox[00m:[01;34m~/eclipse-workspace/proj06[00m$ l
+CongaLine.cpp    List.h          ReadFromTest2.txt  WriteToTest.txt
+CongaLine.h      ListTester.cpp  ReadFromTest.txt
+[0m[01;34mDebug[0m/           ListTester.h    typescript
+istreamTest.txt  main.cpp        writeToTest.txt
+]0;duncv@duncv-VirtualBox: ~/eclipse-workspace/proj06[01;32mduncv@duncv-VirtualBox[00m:[01;34m~/eclipse-workspace/proj06[00m$ s[Kcat -b main.cpp 
+     1	/* main.cpp is the driver for a Conga line simulation.
+     2	 *
+     3	 * @author: Joel Adams, for CS 112 at Calvin College.
+     4	 *
+     5	 * Based on an exercise by Marc LeBlanc from Wheaton College (MS).
+     6	 */
+
+     7	#include "CongaLine.h"
+     8	#include "ListTester.h"
+
+     9	int main() {
+    10		ListTester lt;
+    11		lt.runTests();
+    12		CongaLine dance("Ann", "Bob");
+    13		dance.run();
+    14	}
+]0;duncv@duncv-VirtualBox: ~/eclipse-workspace/proj06[01;32mduncv@duncv-VirtualBox[00m:[01;34m~/eclipse-workspace/proj06[00m$ cat -b CongaLine.h
+     1	/* CongaLine.h declares class CongaLine,
+     2	 *  a Conga line dance simulation.
+     3	 *
+     4	 * @author: Joel Adams, for CS 112 at Calvin College.
+     5	 *
+     6	 * Based on an exercise by Marc LeBlanc from Wheaton College (MS).
+     7	 *
+     8	 * Student: Duncan Van Keulen (djv78)
+     9	 * Date: 17 March 2019
+    10	 */
+
+
+    11	#ifndef CONGALINE_H_
+    12	#define CONGALINE_H_
+
+    13	#include "List.h"
+    14	#include <string>
+    15	using namespace std;
+
+    16	class CongaLine {
+    17	public:
+    18		CongaLine(const string& person1, const string& person2);
+    19		void run();
+
+    20	private:
+    21		List<string> myLine;
+
+    22		string MY_MENU;
+    23		string myFirstPerson;
+    24		string mySecondPerson;
+
+    25		friend class ListTester;
+    26	};
+
+    27	#endif /* CONGALINE_H_ */
+]0;duncv@duncv-VirtualBox: ~/eclipse-workspace/proj06[01;32mduncv@duncv-VirtualBox[00m:[01;34m~/eclipse-workspace/proj06[00m$ cat -b CongaLine.cpp 
+     1	/* CongaLine.cpp defines the methods for class CongaLine.
+     2	 *
+     3	 * @author: Joel Adams, for CS 112 at Calvin College.
+     4	 *
+     5	 * Based on an exercise by Marc LeBlanc from Wheaton College (MS).
+     6	 *
+     7	 * Student: Duncan Van Keulen (djv78)
+     8	 * Date: 17 March 2019
+     9	 */
+
+    10	#include "CongaLine.h"
+
+    11	/* The CongaLine constructor
+    12	 * @param: person1, a string
+    13	 * @param: person2, a string
+    14	 * Postcondition: myFirstPerson == person1
+    15	 *             && mySecondPerson == person2
+    16	 *             && person1 is the first Item in myLine
+    17	 *             && person2 is the second Item in myLine
+    18	 *             && MY_MENU has been initialized.
+    19	 */
+    20	CongaLine::CongaLine(const string& person1, const string& person2) {
+    21		myLine.append(person1);
+    22		myLine.append(person2);
+    23		myFirstPerson = person1;
+    24		mySecondPerson = person2;
+    25		MY_MENU = string("Please enter:\n")
+    26			+ " 1 to join the Conga line at the end\n"
+    27			+ " 2 to join the Conga line after a particular person\n"
+    28			+ " 3 to join the Conga line before a particular person\n"
+    29			+ " 4 to quit\n"
+    30			+ "--> ";
+    31	}
+
+    32	/* Method to run the CongaLine simulation,
+    33	 *  prompting the user via cout
+    34	 *  and reading the user's input via cin.
+    35	 */
+    36	void CongaLine::run() {
+    37		unsigned menuChoice = 0;
+    38		string yourName, otherPersonsName;
+    39		cout << myFirstPerson << " and " << mySecondPerson
+    40				<< " have started a Conga Line!" << endl;
+
+    41		while (menuChoice != 4) {
+    42			cout << "\n " << myLine << "\n\n";
+    43	//		cout << "\n"; myLine.writeTo(cout, "="); cout << "\n\n";
+    44			cout << "Conga, Conga, Con-GA!  Conga, Conga, Con-GA!\n" << endl;
+    45			cout << MY_MENU;
+    46			cin >> menuChoice;
+    47			if (menuChoice == 1 || menuChoice == 2 || menuChoice == 3) {
+    48				cout << "\nWhat is your name? ";
+    49				cin >> yourName;
+    50			}
+
+    51			switch( menuChoice ) {
+    52			case 1:
+    53				myLine.append(yourName);
+    54				break;
+    55			case 2:
+    56				cout << "Who do you want to follow? ";
+    57				cin >> otherPersonsName;
+    58				if ( !myLine.insertAfter(otherPersonsName, yourName) ) {
+    59					cout << "\n***" << otherPersonsName
+    60						 << " is not dancing!\n" << endl;
+    61				}
+    62				break;
+    63			case 3:
+    64				cout << "Who do you want to precede? ";
+    65				cin >> otherPersonsName;
+    66				if ( !myLine.insertBefore(otherPersonsName, yourName) ) {
+    67					cout << "\n***" << otherPersonsName
+    68						 << " is not dancing!\n" << endl;
+    69				}
+    70				break;
+    71			case 4:
+    72				cout << "\nThe dance is done!\n";
+    73				break;
+    74			default:
+    75				cout << "\n*** " << menuChoice
+    76				     << " is not a valid choice!\n" << endl;
+    77			}
+    78		}
+    79	}
+
+
+]0;duncv@duncv-VirtualBox: ~/eclipse-workspace/proj06[01;32mduncv@duncv-VirtualBox[00m:[01;34m~/eclipse-workspace/proj06[00m$ cat -b l[KList.h
+     1	/*
+     2	 * List.h <Template>
+     3	*  Created on: Mar 5, 2019
+     4	 *      Author: Duncan Van Keulen (djv78)
+     5	 *      Author: Andrew Vrieland (ajv234)
+     6	 *
+     7	 *  Project Methods:
+     8	 *  @author: Duncan Van Keulen
+     9	 *  	operator== (and test)
+    10	 *  	readFrom(stream) (and test)
+    11	 *  	writeTo(file) (and test)
+    12	 *  	prepend() (and test)
+    13	 *  	insert(item, index) (and test)
+    14	 *  @author: Andrew Vrieland (ajv234)
+    15	 *  	inequality (and test)
+    16	 *  	writeTo(stream) (and test)
+    17	 *  	readFrom(stream) (and test)
+    18	 *  	getIndexOf() (and test)
+    19	 *  	remove() (and test)
+    20	 *
+    21	 *  Updated for CongaLine on 17 March 2019 by Duncan Van Keulen (djv78)
+    22	 */
+
+    23	#ifndef LIST_H_
+    24	#define LIST_H_
+
+    25	#include <iostream>
+    26	#include <stdexcept>
+    27	#include <cassert>
+    28	#include <fstream>
+    29	#include <stdio.h>
+    30	#include <stdlib.h>
+    31	using namespace std;
+
+    32	template<class Item>
+
+    33	class List {
+    34	public:
+    35		List();
+    36		List(const List<Item>& original);
+    37		List<Item>& operator=(const List<Item>& original);
+    38		void append(const Item& item);
+    39		virtual ~List();
+    40		unsigned getSize() const { return mySize; }
+    41		Item getFirst() const;
+    42		Item getLast() const;
+    43		bool operator==(const List<Item>& rhs);
+    44		void readFrom(istream& in);
+    45		void writeTo(const string& str, string separator = "\t");
+    46		void prepend(const Item& it);
+    47		void insert(const Item& it, unsigned index);
+    48		bool operator!=(const List<Item>& l2);
+    49		void writeTo(ostream& out, string seperator);
+    50		void readFrom(string fileName);
+    51		unsigned getIndexOf(Item it);
+    52		void remove(unsigned index);
+
+    53		// CongaLine methods
+    54		bool insertAfter(const string& otherPersonsName, const string& yourName);
+    55		bool insertBefore(const string& otherPersonsName, const string& yourName);
+
+    56	private:
+    57		struct Node {
+    58			Node();
+    59			Node(Item it, Node* next);
+    60			~Node();
+
+    61			Item myItem;
+    62			Node* myNext;
+    63		};
+
+    64		unsigned mySize;
+    65		Node* myFirst;
+    66		Node* myLast;
+
+    67		void makeCopyOf(const List& original);
+
+    68		friend class ListTester;
+    69		friend class CongaLine;
+    70	};
+
+    71	// Default List constructor
+    72	template<class Item>
+    73	List<Item>::List() {
+    74		mySize = 0;
+    75		myFirst = myLast = NULL;
+
+    76	}
+
+    77	// Function to make a copy of a List
+    78	template<class Item>
+    79	void List<Item>::makeCopyOf(const List<Item>& original) {
+    80		myFirst = myLast = NULL; //  set pointers
+    81		mySize = 0; //   and size to 'empty' values
+    82		Node* oPtr = original.myFirst; //  start at the first node
+    83		while (oPtr != NULL) {
+    84			//  while there are nodes to copy:
+    85			append(oPtr->myItem); //   append the item in that node
+    86			oPtr = oPtr->myNext; //   advance to next node
+    87		}
+    88	}
+
+    89	// List copy constructor
+    90	template<class Item>
+    91	List<Item>::List(const List<Item>& original) {
+    92		makeCopyOf(original);
+    93	}
+
+    94	// Node Default constructor
+    95	template<class Item>
+    96	List<Item>::Node::Node() {
+    97		myItem = Item();
+    98		myNext = NULL;
+    99	}
+
+   100	// Node explicit constructor
+   101	template<class Item>
+   102	List<Item>::Node::Node(Item it, Node* next) {
+   103		myItem = it;
+   104		myNext = next;
+   105	}
+
+   106	// Accessor for the first Item of the list
+   107	template<class Item>
+   108	Item List<Item>::getFirst() const {
+   109		if (mySize < 0 || myLast == NULL) {
+   110			throw underflow_error("An attempt was made to access an empty list item");
+   111		}
+   112		return myFirst->myItem;
+   113	}
+
+   114	// Accessor for the last Item of the list
+   115	template<class Item>
+   116	Item List<Item>::getLast() const {
+   117		if (mySize < 0 || myLast == NULL) {
+   118			throw underflow_error("An attempt was made to access an empty list item");
+   119		}
+   120		return myLast->myItem;
+   121	}
+
+   122	// Function to append Items to the back of the list
+   123	template<class Item>
+   124	void List<Item>::append(const Item& it) {
+   125		Node* nodePtr = new Node(it, NULL);
+   126		if (mySize == 0) {
+   127			myFirst = nodePtr;
+   128		} else {
+   129			myLast->myNext = nodePtr;
+   130		}
+   131		mySize++;
+   132		myLast = nodePtr;
+   133	}
+
+   134	// Overload the assignment operator
+   135	template<class Item>
+   136	List<Item>& List<Item>::operator=(const List<Item>& original) {
+   137		if (this != &original) {
+   138			this->~List();				  // Invoke the List's destructor to clean up
+   139			makeCopyOf(original);
+   140		}
+   141		return *this;
+   142	}
+
+   143	/* Equality operator overloading
+   144	 * @param const List& rhs: The list object to be compared with
+   145	 * precondition: Both lists have to exists
+   146	 * returns: Will return a boolean value indicating whether the lists
+   147	 * 										        contain all the same items
+   148	 * @author: Duncan Van Keulen
+   149	 */
+   150	template<class Item>
+   151	bool List<Item>::operator==(const List<Item>& rhs) {
+   152		if (rhs.mySize == mySize) {
+   153			Node* myPtr = myFirst;
+   154			Node* itsPtr = rhs.myFirst;
+
+   155			while (myPtr != NULL || itsPtr != NULL) {
+   156				if (myPtr->myItem == itsPtr->myItem) {
+   157					myPtr = myPtr->myNext;
+   158					itsPtr = itsPtr->myNext;
+   159				} else { return false; }
+   160			}
+   161			return true;
+   162		}
+   163		return false;
+   164	}
+
+   165	/* Read from a stream
+   166	 * Reads values separated by whitespace into the list from a stream
+   167	 * 													until a newline
+   168	 * @param istream& in: The stream to read from
+   169	 * precondition: Stream exists and can be read from
+   170	 * postcondition: List will be filled with the items from one line of the stream
+   171	 * @author: Duncan Van Keulen
+   172	 */
+   173	template<class Item>
+   174	void List<Item>::readFrom(istream& in) {
+   175		Item thing;
+   176		while (in >> thing) {
+   177			append(thing);
+   178		}
+   179	}
+
+   180	/* Write to a file
+   181	 * Writes the contents of a list to the specified file
+   182	 * @param const string& filename: The name of the file to be written to
+   183	 * @param string separator: The desired separator between the items of the list
+   184	 * 						    Defaults to "\t"
+   185	 * precondition: List exists and has items
+   186	 * postcondition: The contents of the list will be written to the file
+   187	 * @author: Duncan Van Keulen
+   188	 */
+   189	template<class Item>
+   190	void List<Item>::writeTo(const string& filename, string separator) {
+   191		Node* myPtr = myFirst;
+   192		ofstream fout(filename.c_str());
+   193		assert( fout.is_open() );
+   194		for (unsigned i = 0; i < mySize; ++i) {
+   195			fout << myPtr->myItem << separator;
+   196			myPtr = myPtr->myNext;
+   197		}
+   198		fout.close();
+   199	}
+
+   200	/* Prepend an item to the beginning of the list
+   201	 * @param const Item& it: The item to be prepended to the list
+   202	 * precondition: The list has to exist
+   203	 * postcondition: The item will be added to the beginning of the list
+   204	 * @author: Duncan Van Keulen
+   205	 */
+   206	template<class Item>
+   207	void List<Item>::prepend(const Item& it) {
+   208		if (mySize == 0) {
+   209			myFirst = myLast = new Node(it, NULL);
+   210		} else {
+   211			myFirst = new Node(it, myFirst);
+   212		}
+   213		mySize++;
+   214	}
+
+   215	/* Insert an item to a specified index of the list
+   216	 * @param constItem& it: The item to be inserted
+   217	 * @param unsigned index: The index to be inserted to
+   218	 * precondition: List has to exist
+   219	 * postcondition: The item will be inserted at the specified index (started at 0)
+   220	 * @author: Duncan Van Keulen
+   221	 */
+   222	template<class Item>
+   223	void List<Item>::insert(const Item& it, unsigned index) {
+   224		if (index == 0) {
+   225			prepend(it);
+   226		} else if (index > mySize - 1 ) {
+   227			append(it);
+   228		} else {
+   229			Node* traverse = myFirst;
+   230			for (unsigned i = 0; i < (index - 1); i++) {
+   231				traverse = traverse->myNext;
+   232			}
+   233			Node* insPtr = new Node(it, traverse->myNext);
+   234			traverse->myNext = insPtr;
+   235			mySize++;
+   236		}
+   237	}
+
+
+   238	/*
+   239	 * Checks inequality between two lists
+   240	 * Precondition: Both lists have to exist
+   241	 * Postcondition: returns a boolean, true if not equal, false if they are equal
+   242	 *
+   243	 * Author: AJ Vrieland (ajv234)
+   244	 */
+   245	template<class Item>
+   246	bool List<Item>::operator!=(const List& l2){
+   247		if (mySize != l2.mySize) {
+   248			return true;
+   249		}
+   250		Node* mPtr = myFirst;
+   251		Node* l2Ptr = l2.myFirst;
+   252		for (unsigned i = 0; i < mySize; ++i) {
+   253			if (mPtr->myItem != l2Ptr->myItem){
+   254				return true;
+   255			} else {
+   256				mPtr = mPtr->myNext;
+   257				l2Ptr = l2Ptr->myNext;
+   258			}
+
+   259		}
+   260		return false;
+   261	}
+
+   262	/*
+   263	 * Writes to an ostream
+   264	 * Precondition: ostream must be open
+   265	 * Postcondition: contents of the list will be writen into the stream
+   266	 *
+   267	 * Author AJ Vrieland (ajv234)
+   268	 */
+   269	template<class Item>
+   270	void List<Item>::writeTo(ostream& out, string seperator) {
+   271		Node* nPtr = myFirst;
+   272		for (unsigned i = 0; i < mySize; ++i){
+   273			out << nPtr->myItem << seperator;
+   274			nPtr = nPtr->myNext;
+   275		}
+   276	}
+
+   277	/*
+   278	 * Reads a list from a file
+   279	 * Precondition: the file must exist
+   280	 * Postcondition: a new list is created with the contents of the file
+   281	 *
+   282	 * Author AJ Vrieland (ajv234)
+   283	 */
+   284	template<class Item>
+   285	void List<Item>::readFrom(string fileName){
+   286		fstream fin(fileName.c_str());
+   287		assert(fin.is_open());
+   288		string tempStr = " ";
+   289		Item tempItem;
+   290		getline(fin, tempStr);
+   291		tempItem = atoi(tempStr.c_str());
+   292		while ( tempStr != ""){
+   293			append(tempItem);
+   294			getline(fin, tempStr);
+   295			tempItem = atoi(tempStr.c_str());
+   296		}
+   297		fin.close();
+   298	}
+
+   299	/*
+   300	 * Returns the Index of the item given
+   301	 * Precondition: The list must exist
+   302	 * Postcondition: The index of the given Item is returned
+   303	 *
+   304	 * Author AJ Vrieland (ajv234)
+   305	 */
+   306	template<class Item>
+   307	unsigned List<Item>::getIndexOf(Item it){
+   308		Node* nPtr = myFirst;
+   309		unsigned index = 0;
+   310		while (nPtr->myItem != it){
+   311			nPtr = nPtr->myNext;
+   312			++index;
+   313			if (nPtr->myItem == myLast->myItem){
+   314				if (nPtr->myItem != it){
+   315					throw invalid_argument("Item does not exist");
+   316				}
+   317			}
+   318		}
+   319		return index;
+   320	}
+
+   321	/*
+   322	 * Removes a node at a given Index
+   323	 * Precondition: the Index must be within the boundaries
+   324	 * Postcondition: the node at a give Index is removed and all other Nodes move down one index
+   325	 *
+   326	 * Author AJ Vrieland (ajv234)
+   327	 */
+   328	template<class Item>
+   329	void List<Item>::remove(unsigned index){
+   330		Node* nPtr1 = myFirst;
+   331		Node* nPtr2 = myFirst;
+   332		if (index == 0){
+   333			myFirst = nPtr1->myNext;
+
+   334		}else{
+   335			for (unsigned i = 0; i < index; ++i) {
+   336				nPtr1 = nPtr1->myNext;
+   337			}
+   338			for (unsigned i = 0; i < index - 1; ++i) {
+   339				nPtr2 = nPtr2->myNext;
+   340			}
+   341			nPtr2->myNext = nPtr1->myNext;
+   342		}
+   343		nPtr1->myNext = NULL;
+   344		mySize = mySize - 1;
+   345		delete nPtr1;
+   346	}
+
+   347	/*
+   348	 * Inserts a person after another in a CongaLine
+   349	 * @param const string& otherPersonsName: The name of the person to insert after
+   350	 * @param const string& yourName: The name of the person to be inserted
+   351	 * Precondition: Conga line must exist and otherPersonsName must be in the CongaLine
+   352	 * Postcondition: yourName will be inserted directly after otherPersonsName in the CongaLine
+   353	 * Returns: Boolean of whether or not the person was in the list, and therefore if anything was added
+   354	 * @author: Duncan Van Keulen
+   355	 */
+   356	template<class Item>
+   357	bool List<Item>::insertAfter(const string& otherPersonsName, const string& yourName) {
+   358		unsigned index;
+   359		try {
+   360			index = getIndexOf(otherPersonsName);	  // get the index of the other person (if existent)
+   361		} catch (invalid_argument&) {
+   362			return false;
+   363		}
+   364		insert(yourName, (index + 1));			  		  // use list insert to insert item at the next index
+   365		return true;
+   366	}
+
+   367	/*
+   368	 * Inserts a person after before in a CongaLine
+   369	 * @param const string& otherPersonsName: The name of the person to insert before
+   370	 * @param const string& yourName: The name of the person to be inserted
+   371	 * Precondition: Conga line must exist and otherPersonsName must be in the CongaLine
+   372	 * Postcondition: yourName will be inserted directly before otherPersonsName in the CongaLine
+   373	 * Returns: Boolean of whether or not the person was in the list, and therefore if anything was added
+   374	 * @author: Duncan Van Keulen
+   375	 */
+   376	template<class Item>
+   377	bool List<Item>::insertBefore(const string& otherPersonsName, const string& yourName) {
+   378		unsigned index;
+   379		try {
+   380			index = getIndexOf(otherPersonsName);	  // get the index of the other person (if existent)
+   381		} catch(invalid_argument&) {
+   382			return false;
+   383		}
+   384		insert(yourName, index);			  		  // use list insert to insert item at the previous index
+   385		return true;
+   386	}
+
+   387	/*
+   388	 * Insertion operator overloading
+   389	 * Writes the List to a stream in CongaLine format
+   390	 * @param ostream& out: The ostream for the CongaLine/List to be written to
+   391	 * @param List<Item>& rhs: the List on the right hand side of the operator to be written
+   392	 * Precondition: List needs to exist, stream needs to be valid
+   393	 * Postcondition: List items will be written to stream separated by "=" (for CongaLine)
+   394	 * Returns ostream&: The ostream object that was passed to the function: to enable chaining of "<<"
+   395	 * @author: Duncan Van Keulen
+   396	 */
+   397	template<class Item>
+   398	ostream& operator<<(ostream& out, List<Item>& rhs) {
+   399		rhs.writeTo(out, "=");
+   400		return out;
+   401	}
+
+   402	//List::~List() {
+   403	//   Node* first = myFirst;     // initialize both to point at the first node
+   404	//   Node* next = first;
+   405	//   while (first != NULL) {    // while there are nodes to be processed:
+   406	//      next = first->myNext;   //   save the address of the next node
+   407	//      delete first;           //   delete the first node
+   408	//      first = next;           //   make first point to the next node
+   409	//   }
+   410	//   myFirst = myLast = NULL;
+   411	//   mySize = 0;
+   412	//}
+
+   413	// List destructor
+   414	template<class Item>
+   415	List<Item>::~List() {
+   416	   delete myFirst;          // delete first node, invoking ~Node() (does nothing if myFirst == NULL)
+   417	   myFirst = myLast = NULL; // clear myFirst and myLast (optional)
+   418	   mySize = 0;              // clear mySize (optional)
+   419	}
+
+   420	// Node destructor
+   421	template<class Item>
+   422	List<Item>::Node::~Node() {
+   423	//   cout << "~Node() is deallocating the node containing item "
+   424	//			 << myItem << endl;
+   425	   delete myNext;       // delete the next node, invoking ~Node() in it
+   426	                        // (does nothing if myNext == NULL)
+   427	}
+
+   428	#endif /* LIST_H_ */
+]0;duncv@duncv-VirtualBox: ~/eclipse-workspace/proj06[01;32mduncv@duncv-VirtualBox[00m:[01;34m~/eclipse-workspace/proj06[00m$ cat -b Listt[KTester.h
+     1	/* ListTester.h declares the test-class for class List.
+     2	 * Joel Adams, for CS 112 at Calvin College.
+     3	 *
+     4	 * Student: Duncan Van Keulen (djv78)
+     5	 * Date: 17 March 2019 (Updated for CongaLine)
+     6	 */
+
+     7	#ifndef LISTTESTER_H_
+     8	#define LISTTESTER_H_
+
+     9	class ListTester {
+    10	public:
+    11		void runTests();
+    12		void testDefaultConstructor();
+    13		void testNodeDefaultConstructor();
+    14		void testNodeExplicitConstructor();
+    15		void testAppend();
+    16		void testDestructor();
+    17		void testCopyConstructor();
+    18		void testAssignment();
+    19		void testEquality();
+    20		void testReadFrom();
+    21		void testWriteToString();
+    22		void testPrepend();
+    23		void testInsert();
+    24		void testInequality();
+    25		void testReadFromFile();
+    26		void testWriteToStream();
+    27		void testGetIndex();
+    28		void testRemove();
+    29		void testInsertAfter();
+    30		void testInsertBefore();
+    31		void testInsertionOperator();
+    32	};
+
+    33	#endif /*LISTTESTER_H_*/
+]0;duncv@duncv-VirtualBox: ~/eclipse-workspace/proj06[01;32mduncv@duncv-VirtualBox[00m:[01;34m~/eclipse-workspace/proj06[00m$ cat -b ListTester.cpp 
+     1	/* ListTester.cpp defines the test methods for class List.
+     2	 * Joel Adams, for CS 112 at Calvin College.
+     3	 *
+     4	 * Student: Duncan Van Keulen (djv78)
+     5	 * Date: 17 March 2019 (Updated for CongaLine)
+     6	 */
+
+
+     7	#include "ListTester.h" // ListTester
+     8	#include "List.h"       // List
+     9	#include "CongaLine.h"	// CongaLine
+    10	#include <iostream>     // cin, cout
+    11	#include <fstream> 	// fin
+    12	#include <cassert>      // assert()
+    13	#include <cstdlib>      // exit()
+    14	#include <stdexcept>    // underflow_error
+    15	using namespace std;
+
+    16	void ListTester::runTests() {
+    17		cout << "Running List tests..." << endl;
+    18		testDefaultConstructor();
+    19		testNodeDefaultConstructor();
+    20		testNodeExplicitConstructor();
+    21		testAppend();
+    22		testDestructor();
+    23		testCopyConstructor();
+    24		testAssignment();
+    25		testEquality();
+    26		testReadFrom();
+    27		testWriteToString();
+    28		testPrepend();
+    29		testInsert();
+    30		testInequality();
+    31		testWriteToStream();
+    32		testReadFromFile();
+    33		testGetIndex();
+    34		testRemove();
+
+    35		cout << endl << "Testing Conga Line operations..." << endl;
+    36		testInsertAfter();
+    37		testInsertBefore();
+    38		testInsertionOperator();
+
+    39		cout << "All tests passed!" << endl << endl;
+    40	}
+
+    41	void ListTester::testDefaultConstructor() {
+    42		cout << "Testing List default constructor... " << flush;
+    43		List<double> aList;
+    44		assert( aList.mySize == 0 );
+    45		assert( aList.myFirst == NULL );
+    46		assert( aList.myLast == NULL );
+    47		cout << "Passed!" << endl;
+    48	}
+
+    49	void ListTester::testNodeDefaultConstructor() {
+    50		cout << "Testing Node default constructor... " << flush;
+    51		List<double>::Node aNode;
+    52		assert( aNode.myItem == double() );
+    53		assert( aNode.myNext == NULL );
+    54		cout << "Passed!" << endl;
+    55	}
+
+    56	void ListTester::testNodeExplicitConstructor() {
+    57		cout << "Testing Node explicit constructor... " << flush;
+    58		List<double>::Node n1(11, NULL);
+    59		assert( n1.myItem == 11 );
+    60		assert( n1.myNext == NULL );
+    61		cout << " 1 " << flush;
+
+    62		List<double>::Node *n3 = new List<double>::Node(33, NULL);
+    63		List<double>::Node n2(22, n3);
+    64		assert( n2.myItem == 22 );
+    65		assert( n2.myNext == n3 );
+    66		cout << " 2 " << flush;
+    67		cout << "Passed!" << endl;
+    68	}
+
+    69	void ListTester::testAppend() {
+    70		cout << "Testing append()... " << flush;
+    71		// empty List
+    72		List<double> aList;
+    73		assert( aList.getSize() == 0 );
+    74		assert( aList.myFirst == NULL );
+    75		assert( aList.myLast == NULL );
+    76		try {
+    77			aList.getFirst();
+    78			cerr << "getFirst() worked on empty list" << endl;
+    79			exit(1);
+    80		} catch (underflow_error&) {
+    81			cout << " 0a " << flush;
+    82		}
+    83		try {
+    84			aList.getLast();
+    85			cerr << "getLast() worked on empty list" << endl;
+    86			exit(1);
+    87		} catch (underflow_error&) {
+    88			cout << " 0b " << flush;
+    89		}
+    90		// append to empty list
+    91		aList.append(11);
+    92		assert( aList.getSize() == 1 );
+    93		assert( aList.myFirst != NULL );
+    94		assert( aList.myLast == aList.myFirst );
+    95		assert( aList.getFirst() == 11 );
+    96		assert( aList.getLast() == 11 );
+    97		assert( aList.myFirst->myNext == NULL );
+    98		cout << " 1 " << flush;
+    99		// append to a list containing 1 Item
+   100		aList.append(22);
+   101		assert( aList.getSize() == 2 );
+   102		assert( aList.myFirst != NULL );
+   103		assert( aList.myLast != NULL );
+   104		assert( aList.myFirst != aList.myLast );
+   105		assert( aList.getFirst() == 11 );
+   106		assert( aList.getLast() == 22 );
+   107		assert( aList.myFirst->myNext != NULL );
+   108		assert( aList.myLast->myNext == NULL );
+   109		cout << " 2 " << flush;
+   110		// append to a list containing 2 Items
+   111		aList.append(33);
+   112		assert( aList.getSize() == 3 );
+   113		assert( aList.myFirst != NULL );
+   114		assert( aList.myLast != NULL );
+   115		assert( aList.getFirst() == 11 );
+   116		assert( aList.getLast() == 33 );
+   117		assert( aList.myFirst->myNext->myItem == 22 );
+   118		assert( aList.myLast->myNext == NULL );
+   119		cout << " 3 " << flush;
+   120		cout << "Passed!" << endl;
+   121	}
+
+   122	void ListTester::testDestructor() {
+   123		cout << "Testing destructor... " << flush;
+   124		List<double> aList;
+   125		aList.~List();
+   126		assert( aList.getSize() == 0 );
+   127		assert( aList.myFirst == NULL );
+   128		assert( aList.myLast == NULL );
+   129		cout << " 1 " << flush;
+
+   130		aList.append(11);
+   131		aList.append(22);
+   132		aList.append(33);
+   133		aList.~List();
+   134		assert( aList.getSize() == 0 );
+   135		assert( aList.myFirst == NULL );
+   136		assert( aList.myLast == NULL );
+   137		cout << " 2 " << flush;
+   138		cout << "Passed!  But double-check for memory leaks!" << endl;
+   139	}
+
+   140	void ListTester::testCopyConstructor() {
+   141		cout << "Testing copy constructor... " << flush;
+   142		// copy empty list
+   143		List<double> list1;
+   144		List<double> list2(list1);
+   145		assert( list2.getSize() == 0 );
+   146		assert( list2.myFirst == NULL );
+   147		assert( list2.myLast == NULL );
+   148		cout << " 1 " << flush;
+
+   149		// copy nonempty list
+   150		List<double> list3;
+   151		list3.append(11);
+   152		list3.append(22);
+   153		list3.append(33);
+   154		List<double> list4(list3);
+   155		assert( list4.getSize() == 3 );
+   156		assert( list4.getFirst() == 11 );
+   157		assert( list4.getLast() == 33 );
+   158		assert( list4.myFirst->myNext->myItem == 22 );
+   159		assert( list4.myFirst != list3.myFirst );
+   160		assert( list4.myLast != list3.myLast );
+   161		cout << " 2 " << flush;
+   162		cout << "Passed!" << endl;
+   163	}
+
+   164	void ListTester::testAssignment() {
+   165		cout << "Testing assignment... " << flush;
+   166		// empty to empty assignment
+   167		List<double> list1;
+   168		List<double> list2;
+   169		list2 = list1;
+   170		assert( list2.getSize() == 0 );
+   171		assert( list2.myFirst == NULL );
+   172		assert( list2.myLast == NULL );
+   173		cout << " 1 " << flush;
+
+   174		// non-empty to empty assignment
+   175		List<double> list3;
+   176		list3.append(11);
+   177		list3.append(22);
+   178		list3.append(33);
+   179		List<double> list4;
+   180		list4 = list3;
+   181		assert( list4.getSize() == 3 );
+   182		assert( list4.getFirst() == 11 );
+   183		assert( list4.getLast() == 33 );
+   184		assert( list4.myFirst->myNext->myItem == 22 );
+   185	      // check that nodes are distinct
+   186		assert( list4.myFirst != list3.myFirst );
+   187		assert( list4.myFirst->myNext != list3.myFirst->myNext );
+   188		assert( list4.myLast != list3.myLast );
+   189		cout << " 2 " << flush;
+
+   190		// equal-sized non-empty to non-empty assignment
+   191		List<double> list5;
+   192		list5.append(44);
+   193		list5.append(55);
+   194		list5.append(66);
+   195		list5 = list3;
+   196		assert( list5.getSize() == 3 );
+   197		assert( list5.getFirst() == 11 );
+   198		assert( list5.getLast() == 33 );
+   199		assert( list5.myFirst->myNext->myItem == 22 );
+   200	      // check that nodes are distinct
+   201		assert( list5.myFirst != list3.myFirst );
+   202		assert( list5.myFirst->myNext != list3.myFirst->myNext );
+   203		assert( list5.myLast != list3.myLast );
+   204		cout << " 3 " << flush;
+
+   205		// empty to non-empty assignment
+   206		List<double> list6;
+   207		list6.append(44);
+   208		list6.append(55);
+   209		list6.append(66);
+   210		List<double> list7;
+   211		list6 = list7;
+   212		assert( list6.getSize() == 0 );
+   213		assert( list6.myFirst == NULL );
+   214		assert( list6.myLast == NULL );
+   215		cout << " 4 " << flush;
+
+   216		// unequal-sized non-empty to non-empty assignment
+   217		List<double> list8;
+   218		list8.append(44);
+   219		list8.append(55);
+   220		list8.append(66);
+   221		list8.append(77);
+   222		list8 = list3;
+   223		assert( list8.getSize() == 3 );
+   224		assert( list8.getFirst() == 11 );
+   225		assert( list8.getLast() == 33 );
+   226		assert( list8.myFirst->myNext->myItem == 22 );
+   227	      // check that nodes are distinct
+   228		assert( list8.myFirst != list3.myFirst );
+   229		assert( list8.myFirst->myNext != list3.myFirst->myNext );
+   230		assert( list8.myLast != list3.myLast );
+   231		cout << " 5 " << flush;
+
+   232		// assignment chaining
+   233		List<double> list9;
+   234		list9.append(44);
+   235		list9.append(55);
+   236		list9.append(66);
+   237		list9.append(77);
+   238		List<double> list10;
+   239		list10 = list9 = list8;
+   240		assert( list10.getSize() == 3 );
+   241		assert( list10.getFirst() == 11 );
+   242		assert( list10.getLast() == 33 );
+   243		assert( list10.myFirst->myNext->myItem == 22 );
+   244		cout << " 6 " << flush;
+
+   245		// self-assignment (stupid, but possible)
+   246		List<double> list11;
+   247		list11.append(11);
+   248		list11.append(22);
+   249		list11.append(33);
+   250		list11 = list11;
+   251		assert( list11.getSize() == 3 );
+   252		assert( list11.getFirst() == 11 );
+   253		assert( list11.getLast() == 33 );
+   254		assert( list11.myFirst->myNext->myItem == 22 );
+   255		cout << " 7 " << flush;
+
+   256		cout << "Passed!  But double-check for memory leaks!" << endl;
+   257	}
+
+   258	void ListTester::testEquality() {
+   259		cout << "Testing equality... " << flush;
+
+   260		// Empty cases
+   261		List<double> list12;
+   262		List<double> list13;
+   263		assert( list12 == list13 );
+   264		assert( list12 == list12);
+   265		assert( list13 == list13);
+   266		cout << " 0 " << flush;
+
+   267		// Empty to non-empty (should not work)
+   268		list12.append(100);
+   269		assert( !(list12 == list13 ) );
+   270		cout << " 1 " << flush;
+
+   271		// Non-emtpy to non-emtpy
+   272		list13.append(100);
+   273		assert( list12 == list13);
+   274		list12.append(111);
+   275		list13.append(111);
+   276		assert( list12 == list13);
+   277		cout << " 3 " << flush;
+
+   278		// Same size (>1), different values
+   279		list13.append(99); list13.append(1);
+   280		list12.append(100); list12.append(2);
+   281		assert( !(list12 == list13) );
+
+   282		cout << " Passed!" << endl;
+   283	}
+
+   284	void ListTester::testReadFrom() {
+   285		cout << "Testing readFrom(stream)... " << flush;
+
+   286		List<double> list14;
+   287		List<double> list15;
+   288		ifstream fin("istreamTest.txt");
+   289		assert( fin.is_open() );
+
+   290		// test by reading from a file using an ifstream
+   291		list14.readFrom(fin);	// should read 10, 11, 12 from file
+   292		assert( !(list14 == list15) );	// make sure that changed something
+   293		assert( list14.getSize() == 3 );
+   294		// make sure all the items from the file are there and in the correct spot
+   295		assert( list14.myFirst->myItem == 10 );
+   296		assert( list14.myFirst->myNext->myItem == 11 );
+   297		assert( list14.myLast->myItem == 12 );
+   298		list15.append(10); list15.append(11); list15.append(12);
+   299		assert( list14 == list15 );		// they should now be equal
+   300		cout << " 0 " << flush;
+
+
+   301		cout << " Passed!" << endl;
+   302	}
+
+   303	void ListTester::testWriteToString() {
+   304		cout << "Testing writeTo(string)... " << flush;
+
+   305		// create a list and append some values to it
+   306		List<double> list16;
+   307		list16.append(11); list16.append(22); list16.append(33);
+   308		list16.writeTo("writeToTest.txt", "\t");
+
+   309		// create a new list, reading from the file stream...
+   310		List<double> list17;
+   311		ifstream fin("writeToTest.txt");
+   312		assert( fin.is_open() );
+   313		list17.readFrom(fin);
+   314		fin.close();
+
+   315		// ...and make sure the lists are equal to each other.
+   316		assert( list17 == list16 );
+   317		cout << " 0 " << flush;
+
+
+   318		cout << " Passed!" << endl;
+   319	}
+
+   320	void ListTester::testPrepend() {
+   321		cout << "Testing prepend()... " << flush;
+
+   322		List<double> list17;
+   323		List<double> list18;
+
+   324		// Empty list
+   325		list17.prepend(1);
+   326		assert( list17.getSize() == 1 );
+   327		assert( !(list17 == list18) );
+   328		assert( list17.myFirst->myItem == 1 );
+   329		assert( list17.myFirst == list17.myLast );
+   330		assert( list17.myLast->myNext == NULL );
+   331		cout << " 0 " << flush;
+
+   332		// First one is same as append
+   333		list18.append(1);
+   334		assert( list17 == list18 );
+   335		cout << " 1 " << flush;
+
+   336		// Multiple items already there
+   337		list17.append(2); list17.append(3);
+   338		List<double> list19;
+   339		list19.append(0); list19.append(1);
+   340		list19.append(2); list19.append(3);
+   341		assert( !(list17 == list19) );
+   342		list17.prepend(0);
+   343		assert( list17.getSize() == 4);
+   344		assert( list17 == list19 );
+   345		cout << " 2 " << flush;
+
+   346		cout << " Passed!" << endl;
+   347	}
+
+   348	void ListTester::testInsert() {
+   349		cout << "Testing insert()... " << flush;
+   350		List<double> list18;
+   351		list18.append(12); list18.append(34); list18.append(78);
+   352		list18.insert(56, 2);
+
+   353		// empty list
+   354		List<double> list19;
+   355		list19.insert(12, 0);
+   356		assert( list19.mySize == 1 );
+   357		assert( list19.myFirst->myItem == 12 );
+   358		cout << " 0 " << flush;
+
+   359		// multiple items, inserting in middle
+   360		assert( list18.mySize == 4 );
+   361		assert( list18.myFirst->myItem == 12 );
+   362		assert( list18.myFirst->myNext->myItem == 34 );
+   363		assert( list18.myFirst->myNext->myNext->myItem == 56 );
+   364		assert( list18.myFirst->myNext->myNext->myNext->myItem == 78 );
+   365		cout << " 1 " << flush;
+
+   366		// mutliple items, insterting at the end
+   367		list18.insert(910, 4);
+   368		assert( list18.mySize == 5 );
+   369		assert( list18.myLast->myItem == 910 );
+   370		cout << " 2 " << flush;
+
+   371		// multiple items, inserting past the end
+   372		list18.insert(1112, 9);
+   373		assert( list18.mySize == 6 );
+   374		assert( list18.myLast->myItem == 1112 );
+   375		cout << " 3 " << flush;
+
+   376		// multiple items, inserting at beginning
+   377		list18.insert(1, 0);
+   378		assert( list18.mySize == 7 );
+   379		assert( list18.myFirst->myItem == 1 );
+   380		cout << " 4 " << flush;
+
+   381		cout << " Passed!" << endl;
+   382	}
+
+   383	void ListTester::testInequality(){
+   384		List<double> l1;
+   385		l1.append(11);
+   386		l1.append(22);
+   387		l1.append(33);
+   388		List<double> l2;
+   389		l2.append(11);
+   390		l2.append(22);
+   391		l2.append(33);
+   392		List<double> l3;
+   393		List<double> l4;
+   394		l4.append(11);
+   395		l4.append(22);
+   396		l4.append(23);
+   397		List<double> l5;
+   398		l5.append(11);
+   399		l5.append(25);
+   400		l5.append(33);
+
+   401		cout << "Testing Inequality... " << flush;
+
+   402		assert ( (l1 != l2) == false);
+   403		cout << " 0 " << flush;
+
+   404		assert ( l1 != l3 );
+   405		assert ( l2 != l3 );
+   406		cout << " 1 " << flush;
+
+   407		assert ( l1 != l4 );
+   408		cout << " 2 " << flush;
+
+   409		assert( l2 != l5 );
+   410		cout << " 3 " << flush;
+
+   411		cout << "Passed!" << endl;
+
+   412	}
+
+   413	void ListTester::testWriteToStream(){
+   414		cout << "Testing WriteToStream... " << flush;
+   415		List<double> l1;
+   416		l1.append(11);
+   417		l1.append(33);
+   418		l1.append(55);
+   419		ofstream fout("WriteToTest.txt");
+   420		assert(fout.is_open());
+   421		l1.writeTo(fout, "\n");
+   422		fout.close();
+
+   423		List<double> l2;
+   424		l2.readFrom("WriteToTest.txt");
+   425		assert(l2.mySize == 3);
+   426		assert(l2.myFirst->myItem == 11);
+   427		assert(l2.myLast->myItem == 55);
+   428		cout << " 0 " << flush;
+
+
+   429		cout << " Passed!"<< endl;
+
+
+   430	}
+
+   431	void ListTester::testReadFromFile(){
+   432		cout << "Testing readFrom(file)... ";
+   433		List<double> l1;
+   434		l1.readFrom("ReadFromTest.txt");
+   435		assert(l1.myFirst->myItem == 19);
+   436		assert(l1.myLast->myItem == 23);
+   437		assert(l1.mySize == 5);
+   438		cout << " 0 " << flush;
+
+   439		List<double> l2;
+   440		l2.readFrom("ReadFromTest2.txt");
+   441		assert( l2.mySize == 0);
+
+   442		cout << "Passed!" << endl;
+   443	}
+
+   444	void ListTester::testGetIndex(){
+   445		cout << "Testing getIndexOf... " << flush;
+   446		List<double> l1;
+   447		l1.readFrom("ReadFromTest.txt");
+   448		assert( l1.getIndexOf(19) == 0 );
+   449		assert( l1.getIndexOf(20) == 1 );
+   450		cout << " 0 " << flush;
+
+   451		assert(l1.getIndexOf(23) == 4);
+   452		assert(l1.getIndexOf(21) == 2);
+   453		cout << " 1 " << flush;
+
+   454		try {
+   455			l1.getIndexOf(99);
+   456			cerr << "Index passed with an Item that is not in the list";
+   457			exit(1);
+   458		} catch(invalid_argument&) {
+   459			cout << " 2 " << flush;
+   460		}
+
+   461		cout << " Passed! " << endl;
+   462	}
+
+   463	void ListTester::testRemove() {
+   464		cout << "Testing Remove... " << flush;
+   465		List<double> l1;
+   466		l1.readFrom("ReadFromTest.txt");
+   467		l1.remove(2);
+   468		assert(l1.mySize == 4);
+   469		cout << " 0 " << flush;
+   470		assert(l1.getIndexOf(22) == 2);
+   471		cout << " 1 " << flush;
+
+   472		l1.remove(0);
+   473		assert(l1.mySize == 3);
+   474		cout << " 2 " << flush;
+   475		assert(l1.getIndexOf(20) == 0);
+   476		cout << " 3 " << flush;
+
+   477		cout << " Passed!" << endl;
+   478	}
+
+   479	void ListTester::testInsertAfter() {
+   480		cout << "Testing insertAfter... " << flush;
+   481		CongaLine groove("Ann", "Charlie");
+
+   482		// make sure the constructor worked properly...
+   483		assert( groove.myLine.mySize == 2 );
+   484		assert( groove.myFirstPerson == "Ann" );
+   485		assert( groove.myLine.myFirst->myItem == "Ann" );
+   486		assert( groove.mySecondPerson == "Charlie" );
+   487		assert( groove.myLine.myLast->myItem == "Charlie" );
+   488		cout << " 0 " << flush;
+
+   489		// normal case inserting after the first person
+   490		groove.myLine.insertAfter("Ann", "Bob");
+   491		assert( groove.myLine.mySize == 3 );
+   492		assert( groove.myLine.myFirst->myItem == "Ann" );
+   493		assert( groove.myLine.myFirst->myNext->myItem == "Bob" );
+   494		assert( groove.myLine.myLast->myItem == "Charlie" );
+   495		cout << " 1 " << flush;
+
+   496		// try inserting after a non-existent member
+   497		if (!groove.myLine.insertBefore("Ian", "Henry")) {
+   498			cout << " 2a " << flush;
+   499		} else {
+   500			cerr << "Insert after worked on a non-existent member" << flush;
+   501		}
+   502		// this all should still be true:
+   503		// invalid insertAfter shouldn't have changed anything
+   504		assert( groove.myLine.mySize == 3 );
+   505		assert( groove.myLine.myFirst->myItem == "Ann" );
+   506		assert( groove.myLine.myFirst->myNext->myItem == "Bob" );
+   507		assert( groove.myLine.myLast->myItem == "Charlie" );
+   508		cout << " 2b " << flush;
+
+   509		// test inserting after the last member
+   510		groove.myLine.insertAfter("Charlie", "DJ");
+   511		assert( groove.myLine.mySize == 4 );
+   512		assert( groove.myLine.myFirst->myItem == "Ann" );
+   513		assert( groove.myLine.myFirst->myNext->myItem == "Bob" );
+   514		assert( groove.myLine.myFirst->myNext->myNext->myItem == "Charlie" );
+   515		assert( groove.myLine.myLast->myItem == "DJ" );
+   516		cout << " 3 " << flush;
+
+
+   517		cout << " Passed!" << endl;
+   518	}
+
+   519	void ListTester::testInsertBefore() {
+   520		cout << "Testing insertBefore... " << flush;
+   521		CongaLine groovy("Bob", "DJ");
+
+   522		// make sure the constructor worked properly...
+   523		assert( groovy.myLine.mySize == 2 );
+   524		assert( groovy.myFirstPerson == "Bob" );
+   525		assert( groovy.myLine.myFirst->myItem == "Bob" );
+   526		assert( groovy.mySecondPerson == "DJ" );
+   527		assert( groovy.myLine.myLast->myItem == "DJ" );
+   528		cout << " 0 " << flush;
+
+   529		// normal case inserting before the first person
+   530		groovy.myLine.insertBefore("Bob", "Ann");
+   531		assert( groovy.myLine.mySize == 3 );
+   532		assert( groovy.myLine.myFirst->myItem == "Ann" );
+   533		assert( groovy.myLine.myFirst->myNext->myItem == "Bob" );
+   534		assert( groovy.myLine.myLast->myItem == "DJ" );
+   535		cout << " 1 " << flush;
+
+   536		// try inserting after a non-existent member
+   537		if (!groovy.myLine.insertBefore("Ian", "Henry")) {
+   538			cout << " 2a " << flush;
+   539		} else {
+   540			cerr << "Insert after worked on a non-existent member" << flush;
+   541		}
+   542		// this all should still be true:
+   543		// invalid insertBefore shouldn't have changed anything
+   544		assert( groovy.myLine.mySize == 3 );
+   545		assert( groovy.myLine.myFirst->myItem == "Ann" );
+   546		assert( groovy.myLine.myFirst->myNext->myItem == "Bob" );
+   547		assert( groovy.myLine.myLast->myItem == "DJ" );
+   548		cout << " 2b " << flush;
+
+   549		// test inserting before the last member
+   550		groovy.myLine.insertBefore("DJ", "Charlie");
+   551		assert( groovy.myLine.mySize == 4 );
+   552		assert( groovy.myLine.myFirst->myItem == "Ann" );
+   553		assert( groovy.myLine.myFirst->myNext->myItem == "Bob" );
+   554		assert( groovy.myLine.myFirst->myNext->myNext->myItem == "Charlie" );
+   555		assert( groovy.myLine.myLast->myItem == "DJ" );
+   556		cout << " 3 " << flush;
+
+
+   557		cout << " Passed!" << endl;
+   558	}
+
+   559	void ListTester::testInsertionOperator() {
+   560		cout << "Testing operator<<... " << flush;
+   561		CongaLine line("Alpha", "Bravo");
+   562		line.myLine.insertAfter("Bravo", "Charlie");
+
+   563		// write the CongaLine's List to cout to make sure it matches what is expected
+   564		cout << endl << line.myLine << endl;
+
+   565		cout << " ^^^ Expecting..." << endl << "'Alpha=Bravo=Charlie='" << flush;
+   566		cout << " 0 " << flush;
+
+
+   567		cout << " Passed!" << endl;
+   568	}
+]0;duncv@duncv-VirtualBox: ~/eclipse-workspace/proj06[01;32mduncv@duncv-VirtualBox[00m:[01;34m~/eclipse-workspace/proj06[00m$ cat -b *.txt
+     1	10 11 12
+     2	19
+     3	20
+     4	21
+     5	22
+     6	23
+     7	11	22	33	11
+     8	33
+     9	55
+]0;duncv@duncv-VirtualBox: ~/eclipse-workspace/proj06[01;32mduncv@duncv-VirtualBox[00m:[01;34m~/eclipse-workspace/proj06[00m$ cd de[K[KDebug/
+]0;duncv@duncv-VirtualBox: ~/eclipse-workspace/proj06/Debug[01;32mduncv@duncv-VirtualBox[00m:[01;34m~/eclipse-workspace/proj06/Debug[00m$ make all
+make: Nothing to be done for 'all'.
+]0;duncv@duncv-VirtualBox: ~/eclipse-workspace/proj06/Debug[01;32mduncv@duncv-VirtualBox[00m:[01;34m~/eclipse-workspace/proj06/Debug[00m$ cd ..
+]0;duncv@duncv-VirtualBox: ~/eclipse-workspace/proj06[01;32mduncv@duncv-VirtualBox[00m:[01;34m~/eclipse-workspace/proj06[00m$ d[K./[K[KDebu.[Kg/proj06 
+Running List tests...
+Testing List default constructor... Passed!
+Testing Node default constructor... Passed!
+Testing Node explicit constructor...  1  2 Passed!
+Testing append()...  0a  0b  1  2  3 Passed!
+Testing destructor...  1  2 Passed!  But double-check for memory leaks!
+Testing copy constructor...  1  2 Passed!
+Testing assignment...  1  2  3  4  5  6  7 Passed!  But double-check for memory leaks!
+Testing equality...  0  1  3  Passed!
+Testing readFrom(stream)...  0  Passed!
+Testing writeTo(string)...  0  Passed!
+Testing prepend()...  0  1  2  Passed!
+Testing insert()...  0  1  2  3  4  Passed!
+Testing Inequality...  0  1  2  3 Passed!
+Testing WriteToStream...  0  Passed!
+Testing readFrom(file)...  0 Passed!
+Testing getIndexOf...  0  1  2  Passed! 
+Testing Remove...  0  1  2  3  Passed!
+
+Testing Conga Line operations...
+Testing insertAfter...  0  1  2a  2b  3  Passed!
+Testing insertBefore...  0  1  2a  2b  3  Passed!
+Testing operator<<... 
+Alpha=Bravo=Charlie=
+ ^^^ Expecting...
+'Alpha=Bravo=Charlie=' 0  Passed!
+All tests passed!
+
+Ann and Bob have started a Conga Line!
+
+ Ann=Bob=
+
+Conga, Conga, Con-GA!  Conga, Conga, Con-GA!
+
+Please enter:
+ 1 to join the Conga line at the end
+ 2 to join the Conga line after a particular person
+ 3 to join the Conga line before a particular person
+ 4 to quit
+--> 1
+
+What is your name? Charlie
+
+ Ann=Bob=Charlie=
+
+Conga, Conga, Con-GA!  Conga, Conga, Con-GA!
+
+Please enter:
+ 1 to join the Conga line at the end
+ 2 to join the Conga line after a particular person
+ 3 to join the Conga line before a particular person
+ 4 to quit
+--> 2
+
+What is your name? B Bravo
+Who do you want to follow? Bob
+
+ Ann=Bob=Bravo=Charlie=
+
+Conga, Conga, Con-GA!  Conga, Conga, Con-GA!
+
+Please enter:
+ 1 to join the Conga line at the end
+ 2 to join the Conga line after a particular person
+ 3 to join the Conga line before a particular person
+ 4 to quit
+--> 3
+
+What is your name? Alpha
+Who do you want to precede? Ann
+
+ Alpha=Ann=Bob=Bravo=Charlie=
+
+Conga, Conga, Con-GA!  Conga, Conga, Con-GA!
+
+Please enter:
+ 1 to join the Conga line at the end
+ 2 to join the Conga line after a particular person
+ 3 to join the Conga line before a particular person
+ 4 to quit
+--> 2
+
+What is your name? Notgonnawork
+Who do you want to follow? henry     Henry
+
+***Henry is not dancing!
+
+
+ Alpha=Ann=Bob=Bravo=Charlie=
+
+Conga, Conga, Con-GA!  Conga, Conga, Con-GA!
+
+Please enter:
+ 1 to join the Conga line at the end
+ 2 to join the Conga line after a particular person
+ 3 to join the Conga line before a particular person
+ 4 to quit
+--> 3
+
+What is your name? Notgonnawork
+Who do you want to precede? Ian
+
+***Ian is not dancing!
+
+
+ Alpha=Ann=Bob=Bravo=Charlie=
+
+Conga, Conga, Con-GA!  Conga, Conga, Con-GA!
+
+Please enter:
+ 1 to join the Conga line at the end
+ 2 to join the Conga line after a particular person
+ 3 to join the Conga line before a particular person
+ 4 to quit
+--> 4
+
+The dance is done!
+]0;duncv@duncv-VirtualBox: ~/eclipse-workspace/proj06[01;32mduncv@duncv-VirtualBox[00m:[01;34m~/eclipse-workspace/proj06[00m$ exit
+
+Script done on 2019-03-17 20:11:35-0400

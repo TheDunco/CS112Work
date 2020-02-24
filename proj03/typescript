@@ -1,0 +1,1249 @@
+Script started on Thu 21 Feb 2019 04:48:52 PM EST
+jmr59@gold12:~/cs112/workspace/project03$ ls
+application.cpp  tester.cpp  Vec.h	       vecTest1.txt	 VecTester.cpp
+application.h	 typescript  vecStreamOut.txt  vecTest2Copy.txt  VecTester.h
+Debug		 Vec.cpp     vecTest1Copy.txt  vecTest2.txt
+jmr59@gold12:~/cs112/workspace/project03$ cd Debug/
+jmr59@gold12:~/cs112/workspace/project03/Debug$ ls
+application.d  objects.mk  subdir.mk  Vec.d	   VecTester.o
+application.o  project03   tester.d   Vec.o
+makefile       sources.mk  tester.o   VecTester.d
+jmr59@gold12:~/cs112/workspace/project03/Debug$ make all
+make: Nothing to be done for 'all'.
+jmr59@gold12:~/cs112/workspace/project03/Debug$ cd ..
+jmr59@gold12:~/cs112/workspace/project03$ cat t tester.cpp 
+/* tester.cpp drives the testing of our Vec class.
+ * @author: Josh Ridder (jmr59)
+ * @author: Duncan Van Keulen (djv78)
+ * Date: 2-19-19
+ * Begun by: Joel C. Adams, for CS 112 at Calvin College.
+ */
+
+#include "VecTester.h"
+#include "application.h"
+
+int main() {
+	VecTester vt;
+	vt.runTests();
+	application a;
+	a.doStuff();
+}
+jmr59@gold12:~/cs112/workspace/project03$ cat V Vec
+Vec.cpp        Vec.h          VecTester.cpp  VecTester.h    
+jmr59@gold12:~/cs112/workspace/project03$ cat Vec.h
+/* Vec.h provides a simple vector class named Vec.
+ * Date: 2-19-19
+ * Begun by: Joel C. Adams, for CS 112 at Calvin College.
+ * @author: Josh Ridder (jmr59)
+ * @author: Duncan Van Keulen (djv78)
+ *  * Josh Ridder:
+ *    operator[] (write)
+ *    != operator
+ *    readFrom
+ *    + operator
+ * Duncan Van Keulen:
+ * 	  operator[] (read)
+ * 	  writeTo
+ * 	  - operator
+ * 	  * operator
+ */
+
+#ifndef VEC_H_
+#define VEC_H_
+
+#include <iostream>
+using namespace std;
+
+typedef double Item;
+
+class Vec {
+public:
+	Vec();
+	virtual ~Vec();
+	Vec(unsigned size);
+	Vec(const Vec& original);
+	Vec& operator=(const Vec& original);
+	unsigned getSize() const {return mySize;}
+	void setItem(unsigned index, const Item& it);
+	Item getItem(unsigned index) const;
+	void setSize(unsigned newSize);
+	bool operator==(const Vec& v2) const;
+	void writeTo(ostream& out) const;
+	void readFrom(istream& in);
+	Vec operator=(const unsigned& num);
+	
+	const Item& operator[](unsigned i) const;
+	Item& operator[](unsigned i);
+	bool operator!=(const Vec& v2);
+	void readFrom(const string& fileName);
+	void writeTo(const string& fileName);
+	Vec operator+(const Vec& v2) const;
+	Vec operator-(const Vec& v2) const;
+	double operator*(const Vec& v2) const;
+
+private:
+	unsigned mySize;
+	Item* myArray;
+	friend class VecTester;
+};
+
+#endif /*VEC_H_*/
+jmr59@gold12:~/cs112/workspace/project03$ cat v Vec.cpp 
+/* Vec.cpp defines the methods for Vec, a simple vector class.
+ * Date: 2-19-19
+ * Begun by: Joel C. Adams, for CS 112 at Calvin College.
+ * @author: Josh Ridder (jmr59)
+ * @author: Duncan Van Keulen (djv78)
+ * Josh Ridder:
+ *    operator[] (write)
+ *    != operator
+ *    readFrom
+ *    + operator
+ * Duncan Van Keulen:
+ * 	  operator[] (read)
+ * 	  writeTo
+ * 	  - operator
+ * 	  * operator
+ */
+ 
+#include "Vec.h"
+#include <stdexcept>
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <cassert>
+using namespace std;
+
+typedef double Item;
+
+Vec::Vec() {
+	mySize = 0;
+	myArray = NULL;
+}
+
+Vec::~Vec() {
+	delete [] myArray;
+	myArray = NULL;
+	mySize = 0;
+}
+
+Vec::Vec(unsigned size) {
+	mySize = size;
+	if (size > 0) {
+		myArray = new Item[size];
+		for (unsigned i = 0; i < size; i++) {
+			myArray[i] = 0;
+		}
+	}
+	else {
+		myArray = NULL;
+	}
+}
+
+Vec::Vec(const Vec& original) {
+	mySize = original.mySize;
+	if (mySize > 0) {
+		myArray = new Item[mySize];
+		for (unsigned i = 0; i < mySize; i++) {
+			myArray[i] = original.myArray[i];
+		}
+	}
+	else {
+		myArray = NULL;
+	}
+}
+
+Vec& Vec::operator=(const Vec& original) {
+	if (mySize != original.mySize) {
+		if (mySize > 0) {
+			delete [] myArray;
+			myArray = NULL;
+		}
+		if (original.mySize > 0) {
+			myArray = new Item[original.mySize];
+		}
+	}
+	mySize = original.mySize;
+	for (unsigned i = 0; i < mySize; i++) {
+		myArray[i] = original.myArray[i];
+	}
+
+
+      return *this;
+}
+
+void Vec::setItem(unsigned index, const Item& it) {
+	if (index < mySize){
+		myArray[index] = it;
+	}
+	else {
+		throw range_error("Invalid index given to setItem method");
+	}
+}
+
+Item Vec::getItem(unsigned index) const {
+	if (index < mySize) {
+		return myArray[index];
+	}
+	else {
+		throw range_error("Invalid index given to getItem method");
+	}
+}
+
+void Vec::setSize(unsigned newSize) {
+	if (mySize != newSize) {
+		if (newSize == 0) {
+			delete [] myArray;
+			myArray = NULL;
+			mySize = 0;
+		}
+		else {
+			Item* newArray = new Item[newSize];
+			if (mySize < newSize) {
+				for (unsigned i = 0; i < mySize; i++) {
+					newArray[i] = myArray[i];
+				}
+				for (unsigned i = mySize; i < newSize; i++) {
+					newArray[i] = 0;
+				}
+			}
+			else {
+				for (unsigned i = 0; i < newSize; i++) {
+					newArray[i] = myArray[i];
+				}
+			}
+			mySize = newSize;
+			delete [] myArray;
+			myArray = newArray;
+		}
+	}
+}
+
+bool Vec::operator==(const Vec& v2) const {
+   if (mySize == v2.getSize()) {
+	   for (unsigned i = 0; i < mySize; i++) {
+		   if (myArray[i] != v2.myArray[i]) {
+			   return false;
+		   }
+	   }
+	  return true;
+   }
+   return false;
+}
+
+void Vec::writeTo(ostream& out) const {
+	for (unsigned i = 0; i < mySize; i++) {
+		out << myArray[i] << endl;
+	}
+}
+
+void Vec::readFrom(istream& in) {
+	unsigned i = 0;
+	while (in) {
+		in >> myArray[i];
+		i++;
+	}
+}
+
+/* Returns the value at the given index
+ * @param: const unsigned i
+ * returns: item at index value i
+ */
+const Item& Vec::operator[](unsigned i) const {
+	if (i < mySize) {
+		return myArray[i];
+	}
+	else {
+		throw range_error("Invalid index given to index operator");
+	}
+}
+
+Item& Vec::operator[](unsigned i) {
+	if (i < mySize) {
+		return myArray[i];
+	}
+	else {
+		throw range_error("Invalid index given to the index operator");
+	}
+}
+
+/* Tests for equality between two vectors
+ * @param: const Vec v2
+ * precondition: two defined vec objects
+ * returns: false if vec objects are identical in size and values; true otherwise
+ */
+bool Vec::operator!=(const Vec& v2) {
+	if (mySize == v2.getSize()) {
+		if (mySize == 0) {
+			return false;
+		}
+		for (unsigned i = 0; i < mySize; i++) {
+			if (myArray[i] != v2.myArray[i]) {
+				return true;
+			}
+		}
+		return false;
+	}
+	return true;
+}
+
+/* Reads vector data from a file
+ * @param: const string fileName
+ * precondition: vector (will be overwritten) and file with data values
+ * postcondition: vector has size and values according to file
+ */
+void Vec::readFrom(const string& fileName) {
+	delete [] myArray;
+	ifstream in;
+	in.open(fileName.c_str());
+	assert(in.is_open());
+	unsigned num;
+	in >> num;
+	mySize = num;
+	Item* newArray = new Item[mySize];
+	for (unsigned i = 0; i < mySize; i++) {
+		in >> newArray[i];
+	}
+	in.close();
+	myArray = newArray;
+}
+
+/* Writes a vector to a file with the first value as the Size
+ * @param: const string fileName
+ * precondition: nonempty vector
+ * postcondition: vector's contents written to file
+*/
+void Vec::writeTo(const string& fileName) {
+	ofstream fout;
+	fout.open(fileName.c_str());
+	assert(fout.is_open());
+	fout << mySize << endl;
+	for (unsigned i = 0; i < mySize; i++) {
+		fout << myArray[i] << endl;
+	}
+	fout.close();
+}
+
+// overload the "+" operator to support vectors
+Vec Vec::operator+(const Vec& v2) const {
+	if (v2.mySize == mySize) {
+		Vec newVec(mySize);
+		for (unsigned i = 0; i < mySize; i++) {
+			newVec.myArray[i] = (myArray[i] + v2.myArray[i]);
+		}
+		return newVec;
+	}
+	throw invalid_argument("Vectors are not the same size");
+}
+
+// overload the "-" operator to support vectors
+Vec Vec::operator-(const Vec& v2) const {
+	if (v2.mySize == mySize) {
+		Vec newVec(mySize);
+		for (unsigned i = 0; i < mySize; i++) {
+			newVec.myArray[i] = (myArray[i] - v2.myArray[i]);
+		}
+		return newVec;
+	}
+	throw invalid_argument("Vectors are not the same size");
+}
+
+// overload the "*" operator to support vectors
+double Vec::operator*(const Vec& v2) const {
+	if (v2.mySize == mySize) {
+		double product = 0;
+		for (unsigned i = 0; i < mySize; i++) {
+			product += (myArray[i] * v2.myArray[i]);
+		}
+		return product;
+	}
+	throw invalid_argument("Vectors are not the same size");
+}
+jmr59@gold12:~/cs112/workspace/project03$ cat VecTester.h
+/* VecTester.h provides unit tests for Vec, a simple vector class.
+ * Student Name: Josh Ridder jmr59
+ * Date: 2-19-19
+ * Begun by: Joel C. Adams, for CS 112 at Calvin College.
+ */
+ 
+#ifndef VECTESTER_H_
+#define VECTESTER_H_
+
+#include "Vec.h"
+
+class VecTester {
+public:
+	void runTests() const;
+	void testDefaultConstructor() const;
+	void testExplicitConstructor() const;
+	void testDestructor() const;
+	void testGetSize() const;
+	void testSetItem() const;
+	void testGetItem() const;
+	void testSetSize() const;
+	void testCopyConstructor() const;
+	void testAssignment() const;
+	void testEquality() const;
+	void testWriteToStream() const;
+	void testReadFromStream() const;
+	void testSubscript() const;
+	void testInequality() const;
+	void testAddition() const;
+	void testSubtraction() const;
+	void testDotProduct() const;
+	void testReadFromFile() const;
+	void testWriteToFile() const;
+};
+
+#endif /*VECTESTER_H_*/
+jmr59@gold12:~/cs112/workspace/project03$ cat VecTester.cpp 
+/* VecTester.cpp defines the unit test-methods for Vec, a simple vector class.
+ * Date: 2-19-19
+ * Begun by: Joel C. Adams, for CS 112 at Calvin College.
+ */
+ 
+#include "VecTester.h"
+#include <iostream>     // cout, cerr, ...
+#include <fstream>      // ifstream, ofstream, ...
+#include <cassert>      // assert()
+#include <cstdlib>      // exit()
+#include <stdexcept>    // range_error, ...
+using namespace std;
+
+void VecTester::runTests() const {
+	cout << "Testing class Vec" << endl;
+	testDefaultConstructor();
+	testExplicitConstructor();
+	testCopyConstructor();
+	testDestructor();
+	testAssignment();
+	testGetSize();
+	testSetItem();
+	testGetItem();
+	testSetSize();
+	testEquality();
+	testWriteToStream();
+	testReadFromStream();
+    testSubscript();
+	testInequality();
+	testAddition();
+	testSubtraction();
+	testDotProduct();
+	testReadFromFile();
+	testWriteToFile();
+	cout << "All tests passed!" << endl;
+}
+
+void VecTester::testDefaultConstructor() const {
+	cout << "Testing default constructor... " << flush;
+	Vec v;
+	assert( v.mySize == 0 );
+	assert( v.myArray == NULL );
+	cout << "Passed!" << endl;
+}
+
+void VecTester::testExplicitConstructor() const {
+	cout << "Testing explicit constructor... " << flush;
+	cout << " 1 " << flush;
+	Vec v1(3);
+	assert( v1.mySize == 3 );
+	assert( v1.myArray != NULL );
+	for (int i = 0; i < 3; i++) {
+		assert( v1.myArray[i] == 0 );
+	}
+	cout << " 2 " << flush;
+	Vec v2(8);
+	assert( v2.mySize == 8 );
+	assert( v2.myArray != NULL );
+	for (int i = 0; i < 8; i++) {
+		assert( v2.myArray[i] == 0 );
+	}
+	cout << " 3 " << flush;
+	Vec v3(0);
+	assert( v3.mySize == 0 );
+	assert( v3.myArray == NULL );
+	cout << " 4 " << flush;
+
+	cout << "Passed!" << endl;
+}
+
+void VecTester::testCopyConstructor() const {
+	cout << "Testing copy constructor..." << flush;
+	cout << " 1 " << flush;
+	Vec v1;
+	Vec v2(v1);
+	assert( v2.mySize == 0 );
+	assert( v2.myArray == NULL);
+
+	cout << " 2 " << flush;
+	Vec v3(5);
+	Vec v4(v3);
+	assert(v4.mySize == 5);
+	assert(v4.myArray != NULL);
+	assert(v4.myArray != v3.myArray);
+	for (unsigned i = 0; i < 5; i++) {
+		assert( v4.myArray[i] == 0 );
+	}
+
+	cout << " 3 " << flush;
+	Vec v5(5);
+	for (unsigned i = 0; i < 5; i++) {
+		v5.myArray[i] = (i+1);
+	}
+	Vec v6(v5);
+	assert( v6.mySize == 5 );
+	assert( v6.myArray != NULL );
+	assert( v6.myArray != v5.myArray );
+	for (unsigned i = 0; i < 5; i++) {
+		assert( v6.myArray[i] == v5.myArray[i] );
+	}
+	cout << "Passed!" << endl;
+}
+
+void VecTester::testDestructor() const {
+	cout << "Testing destructor... " << flush;
+	Vec v(5);
+	v.~Vec();
+	assert( v.mySize == 0 );
+	assert( v.myArray == NULL );
+	cout << "Passed, but make sure ~Vec() is returning the array's memory to the system!" << endl;
+}
+
+void VecTester::testAssignment() const {
+	cout << "Testing =..." << flush;
+	// empty-to-empty
+	Vec v, v0;
+	v = v0;
+	assert(v.mySize == 0);
+	assert(v.myArray == NULL);
+	cout << " 0 " << flush;
+	// empty-to-nonempty
+	Vec v1;
+	Vec v2(5);
+	v2 = v1;
+	assert(v2.mySize == 0);
+	assert(v2.myArray == NULL);
+	cout << " 1 " << flush;
+	// nonempty-to-empty
+	Vec v3(5);
+	for (unsigned i = 0; i < 5; i++) {
+		v3.myArray[i] = (i+1);
+	}
+	Vec v4;
+	v4 = v3;
+	assert( v4.mySize == 5 );
+	assert( v4.myArray != v3.myArray );
+	for (unsigned i = 0; i < 5; i++) {
+		assert( v4.myArray[i] == (i+1) );
+	}
+	cout << " 2 " << flush;
+	// nonempty-to-nonempty (larger into smaller)
+	Vec v5(2);
+	for (unsigned i = 0; i < 2; i++) {
+		v5.myArray[i] = (i+1)*10;
+	}
+	v5 = v3;
+	assert(v5.mySize == 5);
+	assert(v5.myArray != v3.myArray);
+	for (unsigned i = 0; i < 5; i++) {
+		assert( v5.myArray[i] == (i+1) );
+	}
+	cout << " 3 " << flush;
+	// nonempty-to-nonempty (smaller into larger)
+	Vec v6(7);
+	for (unsigned i = 0; i < 7; i++) {
+		v6.myArray[i] = (i+1)*10;
+	}
+	v6 = v3;
+	assert(v6.mySize == 5);
+	assert(v6.myArray != v3.myArray);
+	for (unsigned i = 0; i < 5; i++) {
+		assert( v6.myArray[i] == (i+1) );
+	}
+	cout << " 4 " << flush;
+	// nonempty-to-nonempty (equal sized)
+	Vec v7(5);
+	for (unsigned i = 0; i < 5; i++) {
+		v7.myArray[i] = (i+1)*10;
+	}
+	v7 = v3;
+	assert(v7.mySize == 5);
+	assert(v7.myArray != v3.myArray);
+	for (unsigned i = 0; i < 5; i++) {
+		assert( v7.myArray[i] == (i+1) );
+	}
+	cout << " 5 " << flush;
+	// assignment chaining
+	Vec v8;
+	Vec v9(4);
+	v9 = v8 = v3;
+	assert( v9.mySize == 5 );
+	assert( v9.mySize == 5 );
+	assert( v8.myArray != v3.myArray );
+	assert( v8.myArray != v3.myArray );
+	assert( v9.myArray != v8.myArray );
+	for (unsigned i = 0; i < 5; i++) {
+		assert( v8.myArray[i] == (i+1) );
+		assert( v9.myArray[i] == (i+1) );
+	}
+	cout << " 6 " << flush;
+	// self-assignment (idiotic but legal)
+	v3 = v3; // @suppress("Assignment to itself")
+	assert( v3.mySize == 5 );
+	assert( v3.myArray != NULL );
+	for (unsigned i = 0; i < 5; i++) {
+		assert(v3.myArray[i] == (i+1) );
+	}
+	cout << " 7 " << flush;
+	cout << "Passed!" << endl;
+}
+
+void VecTester::testGetSize() const {
+	cout << "Testing getSize()..." << flush;
+	Vec v1;
+	assert( v1.getSize() == 0 );
+	cout << " 1 " << flush;
+	Vec v2(5);
+	assert( v2.getSize() == 5 );
+	cout << " 2 " << flush;
+	cout << "Passed!" << endl;
+}
+
+void VecTester::testSetItem() const {
+	cout << "Testing setItem()... " << flush;
+	// empty case
+	Vec v0;
+	try {
+		v0.setItem(0, 11);
+		cerr << "setItem() succeeded on empty Vec";
+		exit(1);
+	} catch (range_error&) {
+		cout << " 0 " << flush;
+	}
+	// nonempty case, valid subscript
+	Vec v(5);
+	for (unsigned i = 0; i < 5; i++) {
+		v.setItem(i, i+1);
+	}
+	for (unsigned i = 0; i < 5; i++) {
+		assert( v.myArray[i] == (i+1) );
+	}
+	cout << " 1 " << flush;
+	// nonempty case, invalid subscript
+	Vec v2(3);
+	try {
+		v2.setItem(3, 33);
+		cerr << "setItem() succeeded beyond end of Vec";
+		exit(1);
+	} catch (range_error&) {
+		cout << " 2 " << flush;
+	}
+	cout << "Passed!" << endl;
+}
+
+void VecTester::testGetItem() const {
+	cout << "Testing getItem()... " << flush;
+	// empty Vec
+	Vec v0;
+	try {
+		v0.getItem(0);
+		cerr << "getItem() succeeded on empty Vec";
+		exit(1);
+	} catch (range_error&) {
+		cout << " 0 " << flush;
+	}
+	// non-empty, valid access
+	Vec v(5);
+	for (unsigned i = 0; i < 5; i++) {
+		v.setItem(i, i+1);
+	}
+	for (unsigned i = 0; i < 5; i++) {
+		assert( v.getItem(i) == (i+1) );
+	}
+	cout << " 1 " << flush;
+	// nonempty Vec, invalid index
+	Vec v2(3);
+	try {
+		v2.getItem(3);
+		cerr << "getItem() succeeded beyond end of Vec";
+		exit(1);
+	} catch (range_error&) {
+		cout << " 2 " << flush;
+	}
+	cout << "Passed!" << endl;
+}
+
+void VecTester::testSetSize() const {
+	cout << "Testing setSize()..." << flush;
+	// empty
+	Vec v0;
+	v0.setSize(3);
+	assert( v0.getSize() == 3 );
+	for (unsigned i = 0; i < 3; i++) {
+		assert( v0.getItem(i) == 0 );
+	}
+	cout << " 0 " << flush;
+
+	// non-empty, increasing
+	Vec v1(5);
+	for (unsigned i = 0; i < 5; i++) {
+		v1.setItem(i, i+1);
+	}
+	Item * saveAddress = v1.myArray;
+	v1.setSize(8);
+	assert( v1.getSize() == 8 );
+	for (unsigned i = 0; i < 5; i++) {
+		assert( v1.getItem(i) == (i+1) );
+	}
+	for (unsigned i = 5; i < 8; i++) {
+		assert( v1.getItem(i) == 0 );
+	}
+	assert( v1.myArray != saveAddress );
+	cout << " 1 " << flush;
+
+	// non-empty, decreasing
+	Vec v2(5);
+	for (unsigned i = 0; i < 5; i++) {
+		v2.setItem(i, i+1);
+	}
+	saveAddress = v2.myArray;
+	v2.setSize(3);
+	assert( v2.getSize() == 3 );
+	for (unsigned i = 0; i < 3; i++) {
+		assert( v2.getItem(i) == (i+1) );
+	}
+	assert( v2.myArray != saveAddress );
+	cout << " 2 " << flush;
+
+	// non-empty, same-size
+	Vec v3(5);
+	for (unsigned i = 0; i < 5; i++) {
+		v3.setItem(i, i+1);
+	}
+	saveAddress = v3.myArray;
+	v3.setSize(5);
+	assert( v3.getSize() == 5 );
+	for (unsigned i = 0; i < 5; i++) {
+		assert( v3.getItem(i) == (i+1) );
+	}
+	assert( v3.myArray == saveAddress );
+	cout << " 3 " << flush;
+	// set size to zero
+	v3.setSize(0);
+	assert( v3.getSize() == 0 );
+	assert( v3.myArray == NULL );
+	cout << " 4 " << flush;
+	cout << "Passed!" << endl;
+}
+
+
+void VecTester::testEquality() const {
+	cout << "Testing ==..." << flush;
+	// empty case
+	Vec v1;
+	Vec v2;
+	assert( v1 == v2 );
+	cout << " 1 " << flush;
+
+	// nonempty, same size, default values
+	Vec v3(5);
+	Vec v4(5);
+	assert( v3 == v4 );
+	cout << " 2 " << flush;
+
+	// nonempty, same size, set values
+	Vec v5(5);
+	Vec v6(5);
+	for (unsigned i = 0; i < 5; i++) {
+		v5.setItem(i, i+1);
+		v6.setItem(i, i+1);
+	}
+	assert( v5 == v6 );
+	cout << " 3 " << flush;
+
+	// empty vs nonempty
+	Vec v7;
+	Vec v8(5);
+	assert( !(v7 == v8) );
+	cout << " 4 " << flush;
+
+	// nonempty, same size, first value different
+	Vec v9(5);
+	Vec v10(5);
+	Vec v11(5);
+	Vec v12(5);
+	v10.setItem(0, 1);
+	assert( !(v9 == v10) );
+	cout << " 5 " << flush;
+
+	// nonempty, same size, middle value different
+	v11.setItem(2, 1);
+	assert( !(v9 == v11) );
+	cout << " 6 " << flush;
+
+	// nonempty, same size, last value different
+	v12.setItem(4, 1);
+	assert( !(v9 == v12) );
+	cout << " 7 " << flush;
+
+	cout << "Passed!" << endl;
+}
+
+void VecTester::testWriteToStream() const {
+      cout << "Testing writeTo(ostream)... " << flush;
+      Vec v1(5);
+      for (unsigned i = 0; i < 5; i++) {
+              v1.setItem(i, i+10);
+      }
+	// write to an ofstream instead of cout, to automate the test
+      ofstream fout("vecStreamOut.txt");
+      assert( fout.is_open() );
+      fout << v1.getSize() << "\n";
+      v1.writeTo(fout);
+	fout.close();
+	// now read in what we just wrote...
+      ifstream fin("vecStreamOut.txt");
+      assert( fin.is_open() );
+      unsigned size;
+      fin >> size;
+      assert( size == 5 );
+      double value;
+      for (unsigned i = 0; i < 5; i++) {
+              fin >> value;
+              assert( value == i+10 );
+      }
+      cout << "Passed! See 'vecStreamOut.txt' for values..." <<
+      endl;
+}
+
+void VecTester::testReadFromStream() const {
+      cout << "Testing readFrom(istream)... " << flush;
+	// an ifstream is-an istream, so use one to automate the test
+      ifstream fin("vecStreamOut.txt");
+      assert( fin.is_open() );
+	// get the size and build the Vec
+      unsigned size;
+      fin >> size;
+      assert( size == 5 );
+      Vec v(size);
+	// test readFrom()
+      v.readFrom(fin);
+      for (unsigned i = 0; i < 5; i++) {
+              assert( v.getItem(i)== i+10 );
+      }
+	fin.close();
+      cout << "Passed!" << endl;
+}
+
+void testConstSubscript(const Vec& v) {
+	assert( v[0] == 11 );
+	assert( v[1] == 22 );
+	assert( v[2] == 33 );
+}
+
+void VecTester::testSubscript() const {
+	cout << "Testing subscript... " << flush;
+	// empty case
+	Vec v0;
+	try {
+		v0[0];
+		cerr << "Subscript worked on empty Vec";
+		exit(1);
+	} catch (const range_error& re) {
+		cout << " 0 " << flush;
+	}
+	// non-empty case, write version
+	Vec v1(3);
+	v1[0] = 11;
+	v1[1] = 22;
+	v1[2] = 33;
+	assert( v1.getItem(0) == 11 );
+	assert( v1.getItem(1) == 22 );
+	assert( v1.getItem(2) == 33 );
+	cout << " 1 " << flush;
+	// non-empty case, read version
+	testConstSubscript(v1);
+	cout << " 2 " << flush;
+	cout << " Passed!" << endl;
+}
+
+void VecTester::testInequality() const {
+	cout << "Testing !=... " << flush;
+	// empty
+	Vec v0;
+	Vec v1;
+	assert( !(v0 != v1) );
+	cout << " 0 " << flush;
+	// empty vs nonempty
+	Vec v2(3);
+	assert( v1 != v2 );
+	cout << " 1 " << flush;
+	// equal sized, same values
+	Vec v3(3);
+	Vec v4(3);
+	assert( !(v3 != v4) );
+	cout << " 2 " << flush;
+	// equal sized, different values
+	for (unsigned i = 0; i < 3; i++) {
+		v4.myArray[i] = i+1;
+	}
+	assert( v3 != v4 );
+	cout << " 3 " << flush;
+
+	cout << "Passed!" << endl;
+}
+
+void VecTester::testAddition() const {
+	cout << "Testing +... " << flush;
+	// nonempty
+	Vec v1(3);
+	Vec v2(3);
+	v1.setItem(0, 1);
+	v1.setItem(1, 2);
+	v1.setItem(2, 3);
+	v2.setItem(0, 2);
+	v2.setItem(1, 4);
+	v2.setItem(2, 6);
+	Vec saveV1 = v1;    // for test 2 below
+	Vec v3 = v1 + v2;
+	assert( v3.getItem(0) == 3 );
+	assert( v3.getItem(1) == 6 );
+	assert( v3.getItem(2) == 9 );
+	cout << " 1 " << flush;
+	// addition should not change the left operand
+	assert( v1.getItem(0) == saveV1.getItem(0) );
+	assert( v1.getItem(1) == saveV1.getItem(1) );
+	assert( v1.getItem(2) == saveV1.getItem(2) );
+	cout << " 2 " << flush;
+	// empty
+	Vec v4, v5;
+	v3 = v4 + v5;
+	assert( v3.getSize() == 0 );
+	assert( v3.myArray == NULL );
+	cout << " 3 " << flush;
+	// different sizes
+	try {
+		v3 = v2 + v4;
+		cerr << "v2 + v4 succeeded for Vecs of different sizes";
+		exit(1);
+	} catch (invalid_argument&) {
+		cout << " 4 " << flush;
+	}
+	cout << "Passed!" << endl;
+}
+
+void VecTester::testSubtraction() const {
+	cout << "Testing -... " << flush;
+	// nonempty
+	Vec v1(3);
+	Vec v2(3);
+	v1.setItem(0, 1);
+	v1.setItem(1, 2);
+	v1.setItem(2, 3);
+	v2.setItem(0, 2);
+	v2.setItem(1, 4);
+	v2.setItem(2, 6);
+	Vec saveV1 = v1;  // for test 2 below
+	Vec v3 = v1 - v2;
+	assert( v3.getItem(0) == -1 );
+	assert( v3.getItem(1) == -2 );
+	assert( v3.getItem(2) == -3 );
+	cout << " 1 " << flush;
+	// subtraction should not change the left operand
+	assert( v1.getItem(0) == saveV1.getItem(0) );
+	assert( v1.getItem(1) == saveV1.getItem(1) );
+	assert( v1.getItem(2) == saveV1.getItem(2) );
+	cout << " 2 " << flush;
+	// empty
+	Vec v4, v5;
+	v3 = v4 - v5;
+	assert( v3.getSize() == 0 );
+	assert( v3.myArray == NULL );
+	cout << " 3 " << flush;
+	// different sizes
+	try {
+		v3 = v2 - v4;
+		cerr << "v2 - v4 succeeded for Vecs of different sizes";
+		exit(1);
+	} catch (invalid_argument&) {
+		cout << " 4 " << flush;
+	}
+	cout << "Passed!" << endl;
+}
+
+void VecTester::testDotProduct() const {
+	cout << "Testing *... " << flush;
+	Vec v1(3);
+	Vec v2(3);
+	v1.setItem(0, 1);
+	v1.setItem(1, 2);
+	v1.setItem(2, 3);
+	v2.setItem(0, 2);
+	v2.setItem(1, 4);
+	v2.setItem(2, 6);
+	Vec saveV1 = v1;  // for test 2 below
+	double product = v1 * v2;
+	assert( product == 28 );
+	cout << " 1 " << flush;
+	// dot product should not change the left operand
+	assert( v1.getItem(0) == saveV1.getItem(0) );
+	assert( v1.getItem(1) == saveV1.getItem(1) );
+	assert( v1.getItem(2) == saveV1.getItem(2) );
+	cout << " 2 " << flush;
+	// empty
+	Vec v4, v5;
+	product = v4 * v5;
+	assert( product == 0 );
+	cout << " 3 " << flush;
+	// different sizes
+	try {
+		product = v2 * v4;
+		cerr << "v2 * v4 succeeded for Vecs of different sizes";
+		exit(1);
+	} catch (invalid_argument&) {
+		cout << " 4 " << flush;
+	}
+	cout << "Passed!" << endl;
+}
+
+void VecTester::testReadFromFile() const {
+	cout << "Testing readFrom()... " << flush;
+	Vec v1;
+	v1.readFrom("vecTest1.txt");
+	assert( v1.getSize() == 3 );
+	assert( v1.myArray != NULL );
+	assert( v1.getItem(0) == 1 );
+	assert( v1.getItem(1) == 2 );
+	assert( v1.getItem(2) == 3 );
+	cout << " 1 " << flush;
+
+	Vec v2(5);
+	//Item* oldAddr = v2.myArray;
+	v2.readFrom("vecTest2.txt");
+	assert( v2.getSize() == 4 );
+	cout << " 2 " << flush;
+	assert( v2.myArray != NULL );
+	assert( v2.getItem(0) == 2 );
+	assert( v2.getItem(1) == 4 );
+	assert( v2.getItem(2) == 6 );
+	assert( v2.getItem(3) == 8 );
+       /* the last assertion assumes that the new array's base
+        *  address is different from the old array's base address,
+        *  which may not be true. If your method seems to be right,
+	*  is correctly using delete to deallocate the old array,
+        *  and passes all assertions except this one, you may
+        *  comment out this assertion.
+        */
+	//assert( v2.myArray != oldAddr );
+	cout << " 3 " << flush;
+	cout << "Passed! Make sure you close the file..." << endl;
+}
+
+void VecTester::testWriteToFile() const {
+	cout << "Testing writeTo()... " << flush;
+	// read a vector we know into an empty Vec...
+	Vec v1;
+	v1.readFrom("vecTest1.txt");
+	// make a copy of it in a different file
+	v1.writeTo("vecTest1Copy.txt");
+	cout << " 1 " << flush;
+	cout << "vecTest1Copy.txt created " << flush;
+	// read in the copy, and check it
+	Vec v3;
+	v3.readFrom("vecTest1Copy.txt");
+      assert( v3.getSize() == 3 );
+      assert( v3.myArray != NULL );
+      assert( v3.getItem(0) == 1 );
+      assert( v3.getItem(1) == 2 );
+      assert( v3.getItem(2) == 3 );
+      cout << " 2 " << flush;
+
+	// read a vector we know into a nonempty Vec...
+	Vec v2(5);
+	v2.readFrom("vecTest2.txt");
+	// make a copy of it in a different file
+	v2.writeTo("vecTest2Copy.txt");
+	cout << " 3 " << flush;
+	cout << "vecTest2Copy.txt created " << flush;
+	// read in the copy and check it
+	v3.readFrom("vecTest2Copy.txt");
+      assert( v3.getSize() == 4 );
+      assert( v3.myArray != NULL );
+      assert( v3.getItem(0) == 2 );
+      assert( v3.getItem(1) == 4 );
+      assert( v3.getItem(2) == 6 );
+      assert( v3.getItem(3) == 8 );
+      cout << " 4 " << flush;
+	cout << "Passed!  Make sure you closed the file..." << endl;
+}
+
+jmr59@gold12:~/cs112/workspace/project03$ cat application.h
+/*
+ * application.h
+ *
+ *  Created on: Feb 21, 2019
+ *      Author: jmr59
+ */
+
+#ifndef APPLICATION_H_
+#define APPLICATION_H_
+
+class application {
+public:
+	void doStuff();
+};
+
+
+
+#endif /* APPLICATION_H_ */
+jmr59@gold12:~/cs112/workspace/project03$ cat Appl    application.cpp 
+/*
+ * application.cpp
+ *
+ * Proj03
+ *
+ * @author: Josh Ridder (jmr59)
+ * @author: Duncan Van Keulen (djv78)
+ *
+ *  Created on: Feb 21, 2019
+ */
+
+
+#include "application.h"
+#include "Vec.h"
+#include <iostream>
+using namespace std;
+
+/* Application for Vec class
+ *
+ * Let's the user enter and add up vectors
+ * how ever many dimensions they want
+ */
+void application::doStuff() {
+	int dimensions;
+
+	// ask the user to enter the number of dimensions they want
+	cout << "Enter a number of dimensions for the vectors: " << flush;
+	cin >> dimensions;
+
+	// get the starting coordinates from the user
+	cout << "Enter the starting coordinates: " << endl;
+	Vec startingVec(dimensions);
+	double position;
+	for (int i = 0; i < dimensions; i++) {
+		cout << i << " value: " << flush;
+		cin >> position;
+		startingVec.setItem(i, position);
+	}
+
+	// initialize needed variables and vector objects
+	string userResponse;
+	Vec userVec(dimensions);
+	double userValue;
+	Vec resultVec(dimensions);
+	resultVec = startingVec;
+
+	cout << "Enter " << dimensions << " dimensional vectors: " << endl;
+
+	// repeatedly get the other vectors from the user until they want to stop
+	while (userResponse != "q") {
+		for (int i = 0; i < dimensions; i++) {
+			cout << i << " value: " << flush;
+			cin >> userValue;
+			userVec.setItem(i, userValue);
+		}
+		resultVec = resultVec + userVec; // add up the vectors as more vectors are entered
+		cout << "{" << flush;
+
+		// print out the vector for the user to see
+		for (int i = 0; i < dimensions - 1; i++) {
+			cout << resultVec.getItem(i) << ", " << flush;
+		}
+
+		// ask the user if they want to quit
+		cout << resultVec.getItem(dimensions - 1) << "}" << endl;
+		cout << "Enter q to quit adding vectors or any key to continue: " << flush;
+		cin >> userResponse;
+	}
+}
+jmr59@gold12:~/cs112/workspace/project03$ cd De     ./Debug/project03 
+Testing class Vec
+Testing default constructor... Passed!
+Testing explicit constructor...  1  2  3  4 Passed!
+Testing copy constructor... 1  2  3 Passed!
+Testing destructor... Passed, but make sure ~Vec() is returning the array's memory to the system!
+Testing =... 0  1  2  3  4  5  6  7 Passed!
+Testing getSize()... 1  2 Passed!
+Testing setItem()...  0  1  2 Passed!
+Testing getItem()...  0  1  2 Passed!
+Testing setSize()... 0  1  2  3  4 Passed!
+Testing ==... 1  2  3  4  5  6  7 Passed!
+Testing writeTo(ostream)... Passed! See 'vecStreamOut.txt' for values...
+Testing readFrom(istream)... Passed!
+Testing subscript...  0  1  2  Passed!
+Testing !=...  0  1  2  3 Passed!
+Testing +...  1  2  3  4 Passed!
+Testing -...  1  2  3  4 Passed!
+Testing *...  1  2  3  4 Passed!
+Testing readFrom()...  1  2  3 Passed! Make sure you close the file...
+Testing writeTo()...  1 vecTest1Copy.txt created  2  3 vecTest2Copy.txt created  4 Passed!  Make sure you closed the file...
+All tests passed!
+Enter a number of dimensions for the vectors: 3
+Enter the starting coordinates: 
+0 value: 1
+1 value: 2
+2 value: 3
+Enter 3 dimensional vectors: 
+0 value: 4
+1 value: 5
+2 value: 6
+{5, 7, 9}
+Enter q to quit adding vectors or any key to continue: y y
+0 value: 7
+1 value: 8
+2 value: 9
+{12, 15, 18}
+Enter q to quit adding vectors or any key to continue: q
+jmr59@gold12:~/cs112/workspace/project03$ ./d Debug/project03 
+Testing class Vec
+Testing default constructor... Passed!
+Testing explicit constructor...  1  2  3  4 Passed!
+Testing copy constructor... 1  2  3 Passed!
+Testing destructor... Passed, but make sure ~Vec() is returning the array's memory to the system!
+Testing =... 0  1  2  3  4  5  6  7 Passed!
+Testing getSize()... 1  2 Passed!
+Testing setItem()...  0  1  2 Passed!
+Testing getItem()...  0  1  2 Passed!
+Testing setSize()... 0  1  2  3  4 Passed!
+Testing ==... 1  2  3  4  5  6  7 Passed!
+Testing writeTo(ostream)... Passed! See 'vecStreamOut.txt' for values...
+Testing readFrom(istream)... Passed!
+Testing subscript...  0  1  2  Passed!
+Testing !=...  0  1  2  3 Passed!
+Testing +...  1  2  3  4 Passed!
+Testing -...  1  2  3  4 Passed!
+Testing *...  1  2  3  4 Passed!
+Testing readFrom()...  1  2  3 Passed! Make sure you close the file...
+Testing writeTo()...  1 vecTest1Copy.txt created  2  3 vecTest2Copy.txt created  4 Passed!  Make sure you closed the file...
+All tests passed!
+Enter a number of dimensions for the vectors: 5 2
+Enter the starting coordinates: 
+0 value: 1 0
+1 value: 0
+Enter 2 dimensional vectors: 
+0 value: 1
+1 value: 2
+{1, 2}
+Enter q to quit adding vectors or any key to continue: y
+0 value: 3
+1 value: 4
+{4, 6}
+Enter q to quit adding vectors or any key to continue: y
+0 value: 5
+1 value: 6
+{9, 12}
+Enter q to quit adding vectors or any key to continue: q
+jmr59@gold12:~/cs112/workspace/project03$ ^C
+jmr59@gold12:~/cs112/workspace/project03$ exit
+
+Script done on Thu 21 Feb 2019 04:51:52 PM EST

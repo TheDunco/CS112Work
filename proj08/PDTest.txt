@@ -1,0 +1,7 @@
+"Madam, I'm Adam"
+This is not a palindrome
+
+neither is that blank line or this, but the next line should be
+"Sit on a potato pan, Otis!"
+kayak
+racecar

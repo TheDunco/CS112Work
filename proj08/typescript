@@ -1,0 +1,1918 @@
+Script started on 2019-04-18 17:05:22-0400
+]0;duncv@duncv-VirtualBox: ~/eclipse-workspace/djv78/proj08[01;32mduncv@duncv-VirtualBox[00m:[01;34m~/eclipse-workspace/djv78/proj08[00m$ ls
+ArrayQueue.h          PalindromeDetector.cpp        palindromeTest.txt  Stack.h
+ArrayQueueTester.cpp  PalindromeDetector.h          PDTestOut.txt       tester.cpp
+ArrayQueueTester.h    PalindromeDetectorTester.cpp  PDTest.txt          typescript
+[0m[01;34mDebug[0m                 PalindromeDetectorTester.h    QueueException.h
+Exception.h           palindromeTestOutput.txt      StackException.h
+]0;duncv@duncv-VirtualBox: ~/eclipse-workspace/djv78/proj08[01;32mduncv@duncv-VirtualBox[00m:[01;34m~/eclipse-workspace/djv78/proj08[00m$ cat -b ArrayQueue.h
+     1	/* ArrayQueue.h declares a Queue class using a dynamic array.
+     2	 * Begun by: Joel Adams, for CS 112 at Calvin College.
+     3	 * Student name: Duncan Van Keulen
+     4	 * Date: 11 April 2019
+     5	 * 
+     6	 * Class Invariant: 
+     7	 *    mySize == 0 ||
+     8	 *    mySize > 0 && myArray[myFirst] == getFirst()
+     9	 *               && myArray[myLast] == getLast().
+    10	 * 
+    11	 *  (When I am not empty:
+    12	 *     myFirstIndex is the index of my oldest value;
+    13	 *     myLastIndex is the index of my newest value.)
+    14	 */
+
+    15	#ifndef ARRAY_QUEUE_H_
+    16	#define ARRAY_QUEUE_H_
+
+    17	#include "QueueException.h"
+    18	#include <cstring>      // memcpy()
+    19	using namespace std;
+
+    20	template<class Item>
+    21	class ArrayQueue {
+    22	public:
+    23		ArrayQueue(const int& cap);
+    24		Item getFirst() const;
+    25		Item getLast() const;
+    26		void append(const Item& it);
+    27		Item remove();
+    28		void setCapacity(const unsigned& newCapacity);
+
+    29		ArrayQueue(const ArrayQueue<Item>& original);
+    30		virtual ~ArrayQueue();
+    31		ArrayQueue& operator=(const ArrayQueue<Item>& original);
+    32		unsigned getSize() const;
+    33		unsigned getCapacity() const;
+    34		bool isEmpty() const;
+    35		bool isFull() const;
+
+    36	protected:
+    37		virtual void makeCopyOf(const ArrayQueue& original);
+    38	private:
+    39		unsigned mySize;       // number of items I contain
+    40		unsigned myCapacity;   // how many items I can store
+    41		unsigned myFirstIndex; // index of oldest item (if any)
+    42		unsigned myLastIndex;  // index of newest item (if any)
+    43		Item*    myArrayPtr;   // dynamic array of items
+
+    44		friend class ArrayQueueTester;
+    45	};
+
+    46	/* Explicit capacity constructor
+    47	 * @param const int& cap: The desired dynamic array capacity
+    48	 * Postcondition: All array instance variables will be initialized to appropriate values
+    49	 * @author: Duncan Van Keulen (lab)
+    50	 */
+    51	template<class Item>
+    52	ArrayQueue<Item>::ArrayQueue(const int& cap) {
+    53		if (cap < 1) {
+    54			throw QueueException("ArrayQueue::ArrayQueue", "Cannot have capacity zero");
+    55		}
+    56		mySize = myFirstIndex = 0;
+    57		myLastIndex = cap - 1;
+    58		myCapacity = cap;
+    59		myArrayPtr = new Item[cap];
+    60	}
+
+    61	/* copy constructor
+    62	 * @param: original, the ArrayQueue to be copied.
+    63	 * Postcondition: I am a deep copy of original.
+    64	 */
+    65	template<class Item>
+    66	ArrayQueue<Item>::ArrayQueue(const ArrayQueue<Item>& original) {
+    67		makeCopyOf(original);
+    68	}
+
+    69	/* utility method to build copies
+    70	 * @param: original, the ArrayQueue to be copied.
+    71	 * Postcondition: I am a deep copy of original.
+    72	 */
+    73	template<class Item>
+    74	void ArrayQueue<Item>::makeCopyOf(const ArrayQueue<Item>& original) {
+    75		mySize = original.mySize;
+    76		myCapacity = original.myCapacity;
+    77		myFirstIndex = original.myFirstIndex;
+    78		myLastIndex = original.myLastIndex;
+    79		myArrayPtr = new Item[myCapacity];
+    80		memcpy(myArrayPtr, original.myArrayPtr, myCapacity*sizeof(Item) );
+    81	}
+
+    82	/* destructor
+    83	 * Postcondition: my dynamic array has been deallocated.
+    84	 */
+    85	template<class Item>
+    86	ArrayQueue<Item>::~ArrayQueue() {
+    87		delete [] myArrayPtr;
+    88		myArrayPtr = NULL;
+    89		mySize = myFirstIndex = myLastIndex = 0;
+    90	}
+
+    91	/* assignment operator
+    92	 * @param: aQueue, an ArrayQueue/
+    93	 * @return: myself.
+    94	 * Postcondition: I am a deep copy of aQueue.
+    95	 */
+    96	template<class Item>
+    97	ArrayQueue<Item>& ArrayQueue<Item>::operator=(const ArrayQueue<Item>& aQueue) {
+    98		if (this != &aQueue) {
+    99			delete [] myArrayPtr;
+   100			makeCopyOf(aQueue);
+   101		}
+   102		return *this;
+   103	}
+
+   104	/* Am I empty?
+   105	 * @return: true if I am empty, false othewise.
+   106	 */
+   107	template<class Item>
+   108	bool ArrayQueue<Item>::isEmpty() const {
+   109		return mySize == 0;
+   110	}
+
+   111	/* Am I full?
+   112	 * @return: true if I am full, false othewise.
+   113	 */
+   114	template<class Item>
+   115	bool ArrayQueue<Item>::isFull() const {
+   116		return getSize() == myCapacity;
+   117	}
+
+   118	/* accessor for myCapacity
+   119	 * @return myCapacity.
+   120	 */
+   121	template<class Item>
+   122	unsigned ArrayQueue<Item>::getCapacity() const {
+   123		return myCapacity;
+   124	}
+
+   125	/* accessor for mySize
+   126	 * @return mySize.
+   127	 */
+   128	template<class Item>
+   129	unsigned ArrayQueue<Item>::getSize() const {
+   130		return mySize;
+   131	}
+
+   132	/* First item accessor
+   133	 * precondition: Queue must not be empty
+   134	 * @return: The item in the array at index myFirstIndex
+   135	 * @author: Duncan Van Keulen (lab)
+   136	 */
+   137	template<class Item>
+   138	Item ArrayQueue<Item>::getFirst() const {
+   139		if ( isEmpty() ) {
+   140			throw EmptyQueueException("ArrayQueue::getFirst()");
+   141		}
+   142		return myArrayPtr[myFirstIndex];
+   143	}
+
+   144	/* Last item accessor
+   145	 * precondition: Queue must not be empty
+   146	 * @return: The item in the array at index myLastIndex
+   147	 * @author: Duncan Van Keulen (lab)
+   148	 */
+   149	template<class Item>
+   150	Item ArrayQueue<Item>::getLast() const {
+   151		if ( isEmpty() ) {
+   152			throw EmptyQueueException("ArrayQueue::getLast()");
+   153		}
+   154		return myArrayPtr[myLastIndex];
+   155	}
+
+   156	/* Append an item to the tail of the queue
+   157	 * @param const Item& it: The item to be appended to the queue
+   158	 * precondition: Queue must not be full
+   159	 * postcondition: The Item will be appended to the tail of the queue
+   160	 * 				  in wrap-around fashion
+   161	 * @author: Duncan Van Keulen
+   162	 */
+   163	template<class Item>
+   164	void ArrayQueue<Item>::append(const Item& it) {
+   165		if ( isFull() ) {
+   166			throw FullQueueException("ArrayQueue::append()");
+   167		}
+   168		myLastIndex = (myLastIndex + 1 ) % myCapacity;
+   169		myArrayPtr[myLastIndex] = it;
+   170		++mySize;
+   171	}
+
+   172	/* Remove an Item from the head of the queue
+   173	 * precondition: Queue must not be empty
+   174	 * postcondition: The first Item will be removed from the queue
+   175	 * 				  in wrap-around fashion
+   176	 * @return: The Item that was removed from the queue
+   177	 * @author: Duncan Van Keulen
+   178	 */
+   179	template<class Item>
+   180	Item ArrayQueue<Item>::remove() {
+   181		if ( isEmpty() ) {
+   182			throw EmptyQueueException("ArrayQueue::remove()");
+   183		}
+   184		Item temp = myArrayPtr[myFirstIndex];
+   185		myFirstIndex = (myFirstIndex + 1) % myCapacity;
+   186		--mySize;
+   187		return temp;
+   188	}
+
+   189	/* Dynamically set a new capacity for the array
+   190	 * @param const unsigned& newCapacity: The desired new capacity
+   191	 * 									   for the array to be set to
+   192	 * precondition: newCapacity must not be 0 or less than mySize
+   193	 * postcondition: Values from old array will be copied into a new array
+   194	 * 				  of the desired capacity in order, starting at index 0
+   195	 * 				  (dealing with the wrap-around)
+   196	 * @author: Duncan Van Keulen (project)
+   197	 */
+   198	template<class Item>
+   199	void ArrayQueue<Item>::setCapacity(const unsigned& newCapacity) {
+   200		// throw exceptions if newCapcity is 0 or less than current capacity
+   201		if ( newCapacity == 0 ) {
+   202			throw QueueException("ArrayQueue<Item>::setCapacity",
+   203					"Can't set capacity to 0");
+   204		} else if ( newCapacity < getSize() ) {
+   205			throw QueueException("ArrayQueue<Item>::setCapacity",
+   206							"Can't set capacity less than current capacity");
+   207		}
+
+   208		/* create a new temporary array and copy myArrayPtr's items into it
+   209		 * putting them in order in the new temporary array, negating the need to
+   210		 * deal with the wrap around later
+   211		 */
+   212		Item* temp = new Item[newCapacity];
+   213		for (unsigned i = 0; i < mySize; ++i) {
+   214			temp[i] = myArrayPtr[(myFirstIndex + i) % myCapacity];
+   215		}
+
+   216		// update the indexes of the first and last item of the queue
+   217		myFirstIndex = 0;
+   218		myLastIndex = mySize - 1;
+
+   219		// delete myArrayPtr to avoid a memory leak
+   220		delete [] myArrayPtr;
+
+   221		// set myArrayPtr to the temp array and update myCapacity
+   222		myCapacity = newCapacity;
+   223		myArrayPtr = temp;
+   224	}
+
+
+
+   225	#endif /*ARRAY_QUEUE_H_*/
+]0;duncv@duncv-VirtualBox: ~/eclipse-workspace/djv78/proj08[01;32mduncv@duncv-VirtualBox[00m:[01;34m~/eclipse-workspace/djv78/proj08[00m$ cat -b ArrayQueueTester.h
+     1	/* ArrayQueueTester.h declares the class that tests class ArrayQueue.
+     2	 * Joel Adams, for CS 112 at Calvin College.
+     3	 */
+     4	 
+     5	#ifndef QUEUETESTER_H_
+     6	#define QUEUETESTER_H_
+
+     7	#include "ArrayQueue.h"
+     8	#include <cassert>
+     9	#include <cstdlib>
+    10	using namespace std;
+
+    11	class ArrayQueueTester {
+    12	public:
+    13		void runTests();
+    14		void testConstructor();
+    15		void testAppend();
+    16		void testRemove();
+    17		void testCopyConstructor();
+    18		void testAssignment();
+    19		void testSetCapacity();
+    20	};
+
+    21	#endif /*QUEUETESTER_H_*/
+]0;duncv@duncv-VirtualBox: ~/eclipse-workspace/djv78/proj08[01;32mduncv@duncv-VirtualBox[00m:[01;34m~/eclipse-workspace/djv78/proj08[00m$ cat -b ArrayQueueTester.h[Kcpp
+     1	/* QueueTester.cpp defines the test-methods for class Queue.
+     2	 * Joel Adams, for CS 112 at Calvin College.
+     3	 */
+     4	 
+     5	#include "ArrayQueueTester.h"
+     6	#include <iostream>
+     7	using namespace std;
+
+     8	void ArrayQueueTester::runTests() {
+     9		cout << "Testing class ArrayQueue..." << endl;
+    10		testConstructor();
+    11		testAppend();
+    12		testRemove();
+    13		testCopyConstructor();
+    14		testAssignment();
+    15		testSetCapacity();
+    16		cout << "All tests passed!\n" << endl;
+    17	}
+
+    18	void ArrayQueueTester::testAssignment() {
+    19		cout << "- testing assignment... " << flush;
+    20		// empty, smaller-to-bigger;
+    21		ArrayQueue<int> q1(4);
+    22		ArrayQueue<int> q2(3);
+    23		q1 = q2;
+    24		assert( q1.isEmpty() );
+    25		assert( q1.myCapacity == 3 );
+    26		assert( q1.getSize() == 0 );
+    27		assert( q1.myFirstIndex == q2.myFirstIndex );
+    28		assert( q1.myLastIndex == q2.myLastIndex );
+    29		assert( q1.myArrayPtr != q2.myArrayPtr );
+    30		cout << " 1 " << flush;
+    31		//empty, bigger to smaller
+    32		ArrayQueue<int> q3(3);
+    33		ArrayQueue<int> q4(4);
+    34		q3 = q4;
+    35		assert( q3.isEmpty() );
+    36		assert( q3.myCapacity == 4 );
+    37		assert( q3.getSize() == 0 );
+    38		assert( q3.myFirstIndex == q4.myFirstIndex );
+    39		assert( q3.myLastIndex == q4.myLastIndex );
+    40		assert( q3.myArrayPtr != q4.myArrayPtr );
+    41		cout << " 2 " << flush;
+    42		// full, same-sized
+    43		ArrayQueue<int> q5(4);
+    44		q5.append(11);
+    45		q5.append(22);
+    46		q5.append(33);
+    47		q5.append(44);
+    48		ArrayQueue<int> q6(4);
+    49		q6 = q5;
+    50		assert( q6.isFull() );
+    51		assert( !q6.isEmpty() );
+    52		assert( q6.myCapacity == 4 );
+    53		assert( q6.getSize() == 4 );
+    54		assert( q6.myFirstIndex == q5.myFirstIndex );
+    55		assert( q6.myLastIndex == q5.myLastIndex );
+    56		for (unsigned i = 0; i < q6.myCapacity; i++) {
+    57			assert( q6.myArrayPtr[i] == q5.myArrayPtr[i] );
+    58		}
+    59		assert( q6.myArrayPtr != q5.myArrayPtr );
+    60		cout << " 3 " << flush;
+    61		// full, smaller-to-larger
+    62		ArrayQueue<int> q7(3);
+    63		q7 = q5;
+    64		assert( q7.isFull() );
+    65		assert( !q7.isEmpty() );
+    66		assert( q7.myCapacity == 4 );
+    67		assert( q7.getSize() == 4 );
+    68		assert( q7.myFirstIndex == q5.myFirstIndex );
+    69		assert( q7.myLastIndex == q5.myLastIndex );
+    70		for (unsigned i = 0; i < q7.myCapacity; i++) {
+    71			assert( q7.myArrayPtr[i] == q5.myArrayPtr[i] );
+    72		}
+    73		assert( q7.myArrayPtr != q5.myArrayPtr );
+    74		cout << " 4 " << flush;
+    75		// full, larger-to-smaller
+    76		ArrayQueue<int> q8(5);
+    77		q8 = q5;
+    78		assert( q8.isFull() );
+    79		assert( !q8.isEmpty() );
+    80		assert( q8.myCapacity == 4 );
+    81		assert( q8.getSize() == 4 );
+    82		assert( q8.myFirstIndex == q5.myFirstIndex );
+    83		assert( q8.myLastIndex == q5.myLastIndex );
+    84		for (unsigned i = 0; i < q8.myCapacity; i++) {
+    85			assert( q8.myArrayPtr[i] == q5.myArrayPtr[i] );
+    86		}
+    87		assert( q8.myArrayPtr != q5.myArrayPtr );
+    88		cout << " 5 " << flush;
+    89		// self assignment
+    90		q5 = q5;
+    91		assert( q5.isFull() );
+    92		assert( !q5.isEmpty() );
+    93		assert( q5.myCapacity == 4 );
+    94		assert( q5.getSize() == 4 );
+    95		assert( q5.myArrayPtr[0] == 11 );
+    96		assert( q5.myArrayPtr[1] == 22 );
+    97		assert( q5.myArrayPtr[2] == 33 );
+    98		assert( q5.myArrayPtr[3] == 44 );
+    99		cout << " 6 " << flush;
+   100		// chaining
+   101		q1 = q3 = q5;
+   102		assert( q1.isFull() );
+   103		assert( !q1.isEmpty() );
+   104		assert( q1.myCapacity == 4 );
+   105		assert( q1.getSize() == 4 );
+   106		assert( q1.myArrayPtr[0] == 11 );
+   107		assert( q1.myArrayPtr[1] == 22 );
+   108		assert( q1.myArrayPtr[2] == 33 );
+   109		assert( q1.myArrayPtr[3] == 44 );
+   110		assert( q1.myArrayPtr != q3.myArrayPtr );
+   111		assert( q1.myArrayPtr != q5.myArrayPtr );
+   112		assert( q3.myArrayPtr != q5.myArrayPtr );
+   113		cout << " 7 " << flush;
+   114		cout << "Passed!" << endl;
+   115	}
+
+   116	void ArrayQueueTester::testCopyConstructor() {
+   117		cout << "- testing copy constructor... " << flush;
+   118		// empty queue
+   119		ArrayQueue<int> q1(4);
+   120		ArrayQueue<int> q2(q1);
+   121		assert( q2.isEmpty() );
+   122		assert( !q2.isFull() );
+   123		assert( q2.myCapacity == q1.myCapacity);
+   124		assert( q2.myFirstIndex == q1.myFirstIndex );
+   125		assert( q2.myLastIndex == q1.myLastIndex );
+   126		assert( q2.myArrayPtr != q1.myArrayPtr );
+   127		cout << " 1 " << flush;
+   128		// queue of 1 item
+   129		ArrayQueue<int> q3(4);
+   130		q3.append(11);
+   131		ArrayQueue<int> q4(q3);
+   132		assert( !q4.isFull() );
+   133		assert( !q4.isEmpty() );
+   134		assert( q4.myCapacity == q3.myCapacity);
+   135		assert( q4.myFirstIndex == q3.myFirstIndex );
+   136		assert( q4.myLastIndex == q3.myLastIndex );
+   137		assert( q4.myArrayPtr != q3.myArrayPtr );
+   138		assert( q4.getFirst() == 11 );
+   139		assert( q4.getLast() == 11 );
+   140		assert( q4.myArrayPtr != q3.myArrayPtr );
+   141	 	cout << " 2 " << flush;
+   142	 	// full queue
+   143	 	q3.append(22);
+   144	 	q3.append(33);
+   145	 	q3.append(44);
+   146	 	ArrayQueue<int> q5(q3);
+   147		assert( q5.isFull() );
+   148		assert( !q5.isEmpty() );
+   149		assert( q5.myCapacity == q3.myCapacity);
+   150		assert( q5.myFirstIndex == q3.myFirstIndex );
+   151		assert( q5.myLastIndex == q3.myLastIndex );
+   152		assert( q5.myArrayPtr != q3.myArrayPtr );
+   153	 	assert( q5.getFirst() == 11 );
+   154		assert( q5.getLast() == 44 );
+   155		assert( q5.myArrayPtr != q3.myArrayPtr );
+   156	 	cout << " 3 " << flush;
+   157		cout << "Passed!" << endl;
+   158	}
+
+   159	void ArrayQueueTester::testRemove() {
+   160		cout << "- testing remove()... " << flush;
+   161		ArrayQueue<int> q1(4);
+   162		cout << " 0 " << flush;
+   163		// check with empty queue
+   164		try {
+   165			q1.remove();
+   166			cerr << "\nremove() worked on empty Queue - 1\n";
+   167			exit(1);
+   168		} catch (EmptyQueueException& eqe) {
+   169			cout << " 1 " << flush;
+   170		}
+   171		// check with 1 item
+   172		q1.append(1);
+   173		assert( !q1.isEmpty() );
+   174		assert( q1.remove() == 1 );
+   175		assert( q1.isEmpty() );
+   176		cout << " 2 " << flush;
+   177		// check with 2 items
+   178		q1.append(11);
+   179		q1.append(22);
+   180		assert( !q1.isEmpty() );
+   181		assert( q1.getFirst() == 11 );
+   182		assert( q1.getLast() == 22 );
+   183		assert( q1.remove() == 11 );
+   184		assert( q1.getFirst() == 22 );
+   185		assert( q1.getLast() == 22 );
+   186		assert( q1.remove() == 22 );
+   187		assert( q1.isEmpty() );
+   188		cout << " 3 " << flush;
+   189		// load it up
+   190		q1.append(111);
+   191		q1.append(222);
+   192		q1.append(333);
+   193		q1.append(444);
+   194		assert( q1.isFull() );
+   195		assert( !q1.isEmpty() );
+   196		assert( q1.getFirst() == 111 );
+   197		assert( q1.getLast() == 444 );
+   198		// start removing items
+   199		assert( q1.remove() == 111 );
+   200		assert( !q1.isFull() );
+   201		assert( !q1.isEmpty() );
+   202		assert( q1.getFirst() == 222 );
+   203		assert( q1.getLast() == 444 );
+   204	    cout << " 4a " << flush;
+   205		assert( q1.remove() == 222 );
+   206		assert( !q1.isFull() );
+   207		assert( !q1.isEmpty() );
+   208		assert( q1.getFirst() == 333 );
+   209		assert( q1.getLast() == 444 );
+   210	    cout << " 4b " << flush;
+   211		assert( q1.remove() == 333 );
+   212		assert( !q1.isFull() );
+   213		assert( !q1.isEmpty() );
+   214		assert( q1.getFirst() == 444 );
+   215		assert( q1.getLast() == 444 );
+   216	    cout << " 4c " << flush;
+   217		assert( q1.remove() == 444 );
+   218		assert( !q1.isFull() );
+   219		assert( q1.isEmpty() );
+   220	    cout << " 4d " << flush;
+   221		// recheck empty queue
+   222		try {
+   223			q1.remove();
+   224			cerr << "\nremove() worked on empty Queue - 2\n";
+   225			exit(1);
+   226		} catch (EmptyQueueException& eqe) {
+   227			cout << " 5 " << flush;
+   228		}
+   229	      ArrayQueue<int> q2(5000);
+   230	    cout << " 6a " << flush;
+   231	      for (int i = 5000; i > 0; i--) {
+   232	          q2.append(i);
+   233	      }
+   234	      assert( q2.isFull() );
+   235	    cout << " 6b " << flush;
+   236	      for (int i = 5000; i > 0; i--) {
+   237	          assert( q2.remove() == i );
+   238	      }
+   239	      assert( q2.isEmpty() );
+   240	    cout << " 6c " << flush;
+   241		cout << "Passed!" << endl;
+   242	}
+
+   243	void ArrayQueueTester::testAppend() {
+   244		cout << "- testing append(), getFirst(), getLast() ... " << flush;
+   245		ArrayQueue<int> q1(4);
+   246		assert( q1.isEmpty() );
+   247		assert( !q1.isFull() );
+   248		try {
+   249			q1.getFirst();
+   250			cerr << "\ngetFirst() worked on empty queue\n";
+   251			exit(1);
+   252		} catch (EmptyQueueException& eqe) {
+   253			cout << " 0a " << flush;
+   254		}
+   255		try {
+   256			q1.getLast();
+   257			cerr << "\ngetLast() worked on empty queue\n";
+   258			exit(1);
+   259		} catch (EmptyQueueException& eqe) {
+   260			cout << " 0b " << flush;
+   261		}
+   262		q1.append(11);
+   263		assert( !q1.isEmpty() );
+   264		assert( !q1.isFull() );
+   265		assert( q1.getFirst() == 11 );
+   266		assert( q1.getLast() == 11 );
+   267		cout << " 1 " << flush;
+   268		q1.append(22);
+   269		assert( !q1.isEmpty() );
+   270		assert( !q1.isFull() );
+   271		assert( q1.getFirst() == 11 );
+   272		assert( q1.getLast() == 22 );
+   273		cout << " 2 " << flush;
+   274		q1.append(33);
+   275		assert( !q1.isEmpty() );
+   276		assert( !q1.isFull() );
+   277		assert( q1.getFirst() == 11 );
+   278		assert( q1.getLast() == 33 );
+   279		cout << " 3 " << flush;
+   280		q1.append(44);
+   281		assert( !q1.isEmpty() );
+   282		assert( q1.isFull() );
+   283		assert( q1.getFirst() == 11 );
+   284		assert( q1.getLast() == 44 );
+   285		cout << " 4 " << flush;
+   286		// append to full queue
+   287		try {
+   288			q1.append(55);
+   289			cerr << "\nappend() worked on full queue\n";
+   290			exit(1);
+   291		} catch (FullQueueException& fqe) {
+   292			cout << " 5 " << flush;
+   293		}
+   294		cout << "Passed, but wrap-around not tested..." << endl;
+   295	}
+
+   296	void ArrayQueueTester::testConstructor() {
+   297		cout << "- testing constructor... " << flush;
+   298		// try with capacity zero
+   299		try {
+   300			ArrayQueue<int> q1(0);
+   301			cerr << "Constructed Queue with capacity zero" << endl;
+   302			exit(1);
+   303		} catch (QueueException& qe) {
+   304		    cout << " 1 " << flush;
+   305		}
+
+   306		// positive capacity
+   307		ArrayQueue<int> q2(3);
+   308		assert( q2.isEmpty() );
+   309		assert( !q2.isFull() );
+   310		assert( q2.myCapacity == 3 );
+   311		cout << " 2 " << flush;
+   312		cout << " Passed!" << endl;
+   313	}
+
+   314	void ArrayQueueTester::testSetCapacity(){
+
+   315		cout << "- testing setCapacity()..." << flush;
+
+   316		//Test changing capacity on an empty queue
+   317		ArrayQueue<int> q1(1);
+   318		assert( q1.getCapacity() == 1 );
+   319		assert( q1.getSize() == 0 );
+   320		assert( q1.isEmpty() );
+   321		assert( !q1.isFull() );
+
+   322		//increase the capacity
+   323		q1.setCapacity(10);
+   324		assert( q1.getCapacity() == 10 );
+   325		assert( q1.getSize() == 0 );
+   326		assert( q1.isEmpty() );
+   327		assert( !q1.isFull() );
+   328		cout << " 1a" << flush;
+
+   329		//decrease the capacity
+   330		q1.setCapacity(5);
+   331		assert( q1.getCapacity() == 5 );
+   332		assert( q1.getSize() == 0 );
+   333		assert( q1.isEmpty() );
+   334		assert( !q1.isFull() );
+   335		cout << " 1b" << flush;
+
+   336		//try setting the capacity to zero
+   337		try{
+   338			q1.setCapacity(0);
+   339			cerr << "setCapacity(0) worked!" << endl;
+   340			exit(1);
+   341		} catch ( QueueException e ) {
+   342			//check to make sure nothing was changed
+   343			assert( q1.getCapacity() == 5 );
+   344			assert( q1.getSize() == 0 );
+   345			assert( q1.isEmpty() );
+   346			assert( !q1.isFull() );
+   347			cout << " 1c" << flush;
+
+   348		}
+
+   349		//Test changing capacity on a queue with items that
+   350		//start at the beginning of the array
+   351		ArrayQueue<int> q2(5);
+   352		for (int i = 0; i < 5; i++){
+   353			q2.append(i+1);
+   354		}
+   355		assert( q2.getCapacity() == 5 );
+   356		assert( q2.getSize() == 5 );
+   357		assert( !q2.isEmpty() );
+   358		assert( q2.isFull() );
+   359		assert( q2.getFirst() == 1 );
+   360		assert( q2.getLast() == 5 );
+
+   361		//increase the capacity
+   362		q2.setCapacity(10);
+   363		assert( q2.getCapacity() == 10 );
+   364		assert( q2.getSize() == 5 );
+   365		assert( !q2.isEmpty() );
+   366		assert( !q2.isFull() );
+   367		assert( q2.getFirst() == 1 );
+   368		assert( q2.getLast() == 5 );
+   369		cout << " 2a" << flush;
+
+   370		//check to make sure appending still works
+   371		q2.append(6);
+   372		assert( q2.getLast() == 6 );
+   373		q2.append(7);
+   374		q2.append(8);
+   375		q2.append(9);
+   376		q2.append(10);
+   377		assert( q2.getCapacity() == 10 );
+   378		assert( q2.getSize() == 10 );
+   379		assert( !q2.isEmpty() );
+   380		assert( q2.isFull() );
+   381		assert( q2.getFirst() == 1 );
+   382		assert( q2.getLast() == 10 );
+   383		cout << " 2b" << flush;
+
+   384		//check to make sure that removing still works
+   385		assert( q2.remove() == 1 );
+   386		assert( q2.remove() == 2 );
+   387		assert( q2.remove() == 3 );
+   388		assert( q2.remove() == 4 );
+   389		assert( q2.remove() == 5 );
+   390		assert( q2.remove() == 6 );
+   391		assert( q2.remove() == 7 );
+   392		assert( q2.remove() == 8 );
+   393		assert( q2.remove() == 9 );
+   394		assert( q2.remove() == 10 );
+   395		assert( q2.getCapacity() == 10 );
+   396		assert( q2.getSize() == 0 );
+   397		assert( q2.isEmpty() );
+   398		assert( !q2.isFull() );
+   399		cout << " 2c" << flush;
+
+   400		//set up a clean queue before continuing...
+   401		ArrayQueue<int> q3(20);
+   402		for (int i = 0; i < 5; i++){
+   403			q3.append(i+1);
+   404		}
+   405		assert( q3.getCapacity() == 20 );
+   406		assert( q3.getSize() == 5 );
+   407		assert( !q3.isEmpty() );
+   408		assert( !q3.isFull() );
+   409		assert( q3.getFirst() == 1 );
+   410		assert( q3.getLast() == 5 );
+
+   411		//decrease the capacity
+   412		q3.setCapacity(10);
+   413		assert( q3.getCapacity() == 10 );
+   414		assert( q3.getSize() == 5 );
+   415		assert( !q3.isEmpty() );
+   416		assert( !q3.isFull() );
+   417		assert( q3.getFirst() == 1 );
+   418		assert( q3.getLast() == 5 );
+   419		cout << " 2d" << flush;
+
+   420		//check to make sure appending still works
+   421		q3.append(6);
+   422		assert( q3.getLast() == 6 );
+   423		q3.append(7);
+   424		q3.append(8);
+   425		q3.append(9);
+   426		q3.append(10);
+   427		assert( q3.getCapacity() == 10 );
+   428		assert( q3.getSize() == 10 );
+   429		assert( !q3.isEmpty() );
+   430		assert( q3.isFull() );
+   431		assert( q3.getFirst() == 1 );
+   432		assert( q3.getLast() == 10 );
+   433		cout << " 2e" << flush;
+
+   434		//check to make sure that removing still works
+   435		assert( q3.remove() == 1 );
+   436		assert( q3.remove() == 2 );
+   437		assert( q3.remove() == 3 );
+   438		assert( q3.remove() == 4 );
+   439		assert( q3.remove() == 5 );
+   440		assert( q3.remove() == 6 );
+   441		assert( q3.remove() == 7 );
+   442		assert( q3.remove() == 8 );
+   443		assert( q3.remove() == 9 );
+   444		assert( q3.remove() == 10 );
+   445		assert( q3.getCapacity() == 10 );
+   446		assert( q3.getSize() == 0 );
+   447		assert( q3.isEmpty() );
+   448		assert( !q3.isFull() );
+   449		cout << " 2f" << flush;
+
+   450		//test setCapacity() on a queue that has items starting
+   451		//in the middle of the array, not wrapping around
+   452		ArrayQueue<int> q4(5);
+   453		for (int i = 0; i < 5; i++){
+   454			q4.append(i+1);
+   455		}
+   456		q4.remove();
+   457		q4.remove();
+   458		assert( q4.getCapacity() == 5 );
+   459		assert( q4.getSize() == 3 );
+   460		assert( !q4.isEmpty() );
+   461		assert( !q4.isFull() );
+   462		assert( q4.getFirst() == 3 );
+   463		assert( q4.getLast() == 5 );
+
+   464		//increase the capacity
+   465		q4.setCapacity(10);
+   466		assert( q4.getCapacity() == 10 );
+   467		assert( q4.getSize() == 3 );
+   468		assert( !q4.isEmpty() );
+   469		assert( !q4.isFull() );
+   470		assert( q4.getFirst() == 3 );
+   471		assert( q4.getLast() == 5 );
+   472		cout << " 3a" << flush;
+
+   473		//check to make sure appending still works
+   474		q4.append(6);
+   475		q4.append(7);
+   476		q4.append(8);
+   477		q4.append(9);
+   478		q4.append(10);
+   479		q4.append(11);
+   480		q4.append(12);
+   481		assert( q4.getCapacity() == 10 );
+   482		assert( q4.getSize() == 10 );
+   483		assert( !q4.isEmpty() );
+   484		assert( q4.isFull() );
+   485		assert( q4.getFirst() == 3 );
+   486		assert( q4.getLast() == 12 );
+   487		cout << " 3b" << flush;
+
+   488		//check to make sure removing still works
+   489		assert( q4.remove() == 3 );
+   490		assert( q4.remove() == 4 );
+   491		assert( q4.remove() == 5 );
+   492		assert( q4.remove() == 6 );
+   493		assert( q4.remove() == 7 );
+   494		assert( q4.remove() == 8 );
+   495		assert( q4.remove() == 9 );
+   496		assert( q4.remove() == 10 );
+   497		assert( q4.remove() == 11 );
+   498		assert( q4.remove() == 12 );
+   499		assert( q4.getCapacity() == 10 );
+   500		assert( q4.getSize() == 0 );
+   501		assert( q4.isEmpty() );
+   502		assert( !q4.isFull() );
+   503		cout << " 3c" << flush;
+
+   504		//create a clean queue before continuing...
+   505		ArrayQueue<int> q5(10);
+   506		for (int i = 0; i < 10; i++){
+   507			q5.append(i+1);
+   508		}
+   509		for (int i = 0; i < 7; i++){
+   510			q5.remove();
+   511		}
+   512		assert( q5.getCapacity() == 10 );
+   513		assert( q5.getSize() == 3 );
+   514		assert( !q5.isEmpty() );
+   515		assert( !q5.isFull() );
+   516		assert( q5.getFirst() == 8 );
+   517		assert( q5.getLast() == 10 );
+
+   518		//reduce the capacity
+   519		q5.setCapacity(5);
+   520		assert( q5.getCapacity() == 5 );
+   521		assert( q5.getSize() == 3 );
+   522		assert( !q5.isEmpty() );
+   523		assert( !q5.isFull() );
+   524		assert( q5.getFirst() == 8 );
+   525		assert( q5.getLast() == 10 );
+   526		cout << " 3d" << flush;
+
+   527		//check to make sure appending still works
+   528		q5.append(11);
+   529		q5.append(12);
+   530		assert( q5.getCapacity() == 5 );
+   531		assert( q5.getSize() == 5 );
+   532		assert( !q5.isEmpty() );
+   533		assert( q5.isFull() );
+   534		assert( q5.getFirst() == 8 );
+   535		assert( q5.getLast() == 12 );
+   536		cout << " 3e" << flush;
+
+   537		//check to make sure removing still works
+   538		assert( q5.remove() == 8 );
+   539		assert( q5.remove() == 9 );
+   540		assert( q5.remove() == 10 );
+   541		assert( q5.remove() == 11 );
+   542		assert( q5.remove() == 12 );
+   543		assert( q5.getCapacity() == 5 );
+   544		assert( q5.getSize() == 0 );
+   545		assert( q5.isEmpty() );
+   546		assert( !q5.isFull() );
+   547		cout << " 3f" << flush;
+
+   548		//test setCapacity() on a queue with values that
+   549		//wrap around the array
+   550		ArrayQueue<int> q6(5);
+   551		for (int i = 0; i < 5; i++){
+   552			q6.append(i+1);
+   553		}
+   554		q6.remove();
+   555		q6.remove();
+   556		q6.remove();
+   557		q6.append(6);
+   558		q6.append(7);
+   559		assert( q6.getCapacity() == 5 );
+   560		assert( q6.getSize() == 4 );
+   561		assert( !q6.isEmpty() );
+   562		assert( !q6.isFull() );
+   563		assert( q6.getFirst() == 4 );
+   564		assert( q6.getLast() == 7 );
+
+   565		//increase the capacity
+   566		q6.setCapacity(10);
+   567		assert( q6.getCapacity() == 10 );
+   568		assert( q6.getSize() == 4 );
+   569		assert( !q6.isEmpty() );
+   570		assert( !q6.isFull() );
+   571		assert( q6.getFirst() == 4 );
+   572		assert( q6.getLast() == 7 );
+   573		cout << " 4a" << flush;
+
+   574		//check to make sure appending still works
+   575		q6.append(8);
+   576		q6.append(9);
+   577		q6.append(10);
+   578		q6.append(11);
+   579		q6.append(12);
+   580		q6.append(13);
+   581		assert( q6.getCapacity() == 10 );
+   582		assert( q6.getSize() == 10 );
+   583		assert( !q6.isEmpty() );
+   584		assert( q6.isFull() );
+   585		assert( q6.getFirst() == 4 );
+   586		assert( q6.getLast() == 13 );
+   587		cout << " 4b" << flush;
+
+   588		//check to make sure removing still works
+   589		assert( q6.remove() == 4 );
+   590		assert( q6.remove() == 5 );
+   591		assert( q6.remove() == 6 );
+   592		assert( q6.remove() == 7 );
+   593		assert( q6.remove() == 8 );
+   594		assert( q6.remove() == 9 );
+   595		assert( q6.remove() == 10 );
+   596		assert( q6.remove() == 11 );
+   597		assert( q6.remove() == 12 );
+   598		assert( q6.remove() == 13 );
+   599		assert( q6.getCapacity() == 10 );
+   600		assert( q6.getSize() == 0 );
+   601		assert( q6.isEmpty() );
+   602		assert( !q6.isFull() );
+   603		cout << " 4c" << flush;
+
+   604		//set up a clean queue before continuing...
+   605		ArrayQueue<int> q7(10);
+   606		for(int i = 0; i < 10; i++){
+   607			q7.append(i+1);
+   608		}
+   609		for(int i = 0; i < 8; i++){
+   610			q7.remove();
+   611		}
+   612		q7.append(11);
+   613		q7.append(12);
+   614		assert( q7.getCapacity() == 10 );
+   615		assert( q7.getSize() == 4 );
+   616		assert( !q7.isEmpty() );
+   617		assert( !q7.isFull() );
+   618		assert( q7.getFirst() == 9 );
+   619		assert( q7.getLast() == 12 );
+
+   620		//reduce the capacity
+   621		q7.setCapacity(6);
+   622		assert( q7.getCapacity() == 6 );
+   623		assert( q7.getSize() == 4 );
+   624		assert( !q7.isEmpty() );
+   625		assert( !q7.isFull() );
+   626		assert( q7.getFirst() == 9 );
+   627		assert( q7.getLast() == 12 );
+   628		cout << " 4d" << flush;
+
+   629		//check to make sure appending still works
+   630		q7.append(13);
+   631		q7.append(14);
+   632		assert( q7.getCapacity() == 6 );
+   633		assert( q7.getSize() == 6 );
+   634		assert( !q7.isEmpty() );
+   635		assert( q7.isFull() );
+   636		assert( q7.getFirst() == 9 );
+   637		assert( q7.getLast() == 14 );
+   638		cout << " 4e" << flush;
+
+   639		//check to make sure removing still works
+   640		assert( q7.remove() == 9 );
+   641		assert( q7.remove() == 10 );
+   642		assert( q7.remove() == 11 );
+   643		assert( q7.remove() == 12 );
+   644		assert( q7.remove() == 13 );
+   645		assert( q7.remove() == 14 );
+   646		assert( q7.getCapacity() == 6 );
+   647		assert( q7.getSize() == 0 );
+   648		assert( q7.isEmpty() );
+   649		assert( !q7.isFull() );
+   650		cout << " 4f" << flush;
+
+   651		//try reducing capacity to less than the current size
+   652		ArrayQueue<int> q8(10);
+   653		for( int i = 0; i < 8; i++){
+   654			q8.append(i+1);
+   655		}
+   656		assert( q8.getCapacity() == 10 );
+   657		assert( q8.getSize() == 8 );
+   658		assert( !q8.isEmpty() );
+   659		assert( !q8.isFull() );
+   660		assert( q8.getFirst() == 1 );
+   661		assert( q8.getLast() == 8 );
+
+   662		try{
+   663			q8.setCapacity(5);
+   664			cerr << "setCapacity worked with new capacity < size" << endl;
+   665			exit(1);
+   666		} catch (QueueException e) {
+   667			//check to make sure nothing changed
+   668			assert( q8.getCapacity() == 10 );
+   669			assert( q8.getSize() == 8 );
+   670			assert( !q8.isEmpty() );
+   671			assert( !q8.isFull() );
+   672			assert( q8.getFirst() == 1 );
+   673			assert( q8.getLast() == 8 );
+   674			assert( q8.remove() == 1 );
+   675			assert( q8.remove() == 2 );
+   676			assert( q8.remove() == 3 );
+   677			assert( q8.remove() == 4 );
+   678			assert( q8.remove() == 5 );
+   679			assert( q8.remove() == 6 );
+   680			assert( q8.remove() == 7 );
+   681			assert( q8.remove() == 8 );
+   682			cout << " 5" << flush;
+   683		}
+
+   684		// copy a full queue, where myFirst && myLast are not zero,
+   685		// so newer items precede older items in the queue
+   686		// (thanks to Christpher Hesters).
+   687		ArrayQueue<int> q9(3);
+   688		q9.append(11);
+   689		q9.append(12);
+   690		q9.append(13);
+   691		assert(q9.remove() == 11);
+   692		q9.append(14);
+   693		assert(q9.remove() == 12);
+   694		q9.append(15);
+   695		q9.setCapacity(4);
+   696		assert(q9.getCapacity() == 4);
+   697		assert(q9.getFirst() == 13);
+   698		assert(q9.getLast() == 15);
+   699		assert(q9.remove() == 13);
+   700		assert(q9.getFirst() == 14);
+   701		assert(q9.getLast() == 15);
+   702		assert(q9.remove() == 14);
+   703		assert(q9.getFirst() == 15);
+   704		assert(q9.getLast() == 15);
+   705		assert(q9.remove() == 15);
+   706		cout << " 6" << flush;
+
+   707		cout << " Passed!" << endl;
+
+   708	}
+
+]0;duncv@duncv-VirtualBox: ~/eclipse-workspace/djv78/proj08[01;32mduncv@duncv-VirtualBox[00m:[01;34m~/eclipse-workspace/djv78/proj08[00m$ cat [K -b Ex[K[K[K[Kb Stack.h
+     1	/* Stack.h provides a (dynamic-array-based) Stack class.
+     2	 * Joel Adams, for CS 112 at Calvin College.
+     3	 * Student Name: Duncan Van Keulen
+     4	 * Date: 26 March 2019
+     5	 * 
+     6	 * Invariant: mySize == 0 && isEmpty() && !isFull()
+     7	 *         || mySize == myCapacity && !isEmpty() && isFull()
+     8	 *         || mySize > 0 && mySize < myCapacity && !isEmpty() && !isFull().
+     9	 * Notes: 
+    10	 * 1. Member mySize always contains the index of the next empty space in myArray
+    11	 *        (the index of the array element into which the next pushed item will be placed).
+    12	 * 2. Sending push() to a full Stack throws the exception Stack::Overflow.
+    13	 * 3. Sending pop() or peekTop() to an empty Stack throws the exception Stack::Underflow.
+    14	 */
+
+    15	#ifndef STACK_H_
+    16	#define STACK_H_
+
+    17	#include "StackException.h"
+    18	#include <cstring>
+    19	#include <string>
+    20	#include <iostream>
+    21	using namespace std;
+
+    22	template<class Item>
+
+    23	class Stack {
+    24	public:
+    25		Stack(unsigned capacity);
+    26		Stack(const Stack<Item>& original);
+    27		~Stack();
+    28		Stack<Item>& operator=(const Stack<Item>& original);
+    29		bool isEmpty() const;
+    30		bool isFull() const;
+    31		Item peekTop() const;
+    32		void push(Item it);
+    33		Item pop();
+    34		unsigned getSize() const { return mySize; }
+    35		unsigned getCapacity() const { return myCapacity; }
+    36		void setCapacity(unsigned newCapacity);
+    37		
+    38	protected:
+    39		void makeCopyOf(const Stack<Item>& original);
+    40		
+    41	private:
+    42		unsigned myCapacity;
+    43		unsigned mySize;
+    44		Item*    myArray;
+    45		friend class StackTester;
+    46	};
+
+    47	/* explicit-value constructor
+    48	 * Parameter: capacity, an unsigned value.
+    49	 * Precondition: capacity > 0.
+    50	 * Postcondition: mySize == 0 && myCapacity == capacity
+    51	 *              && myArray contains the address of a dynamic array of 'capacity' entries.
+    52	 */
+    53	template<class Item>
+    54	Stack<Item>::Stack(unsigned capacity) {
+    55		if ( !(capacity > 0) ) {
+    56			throw StackException(
+    57					"Stack(capacity)", "capacity must be positive!");
+    58		}
+    59	   mySize = 0;
+    60	   myCapacity = capacity;
+    61	   myArray = new Item[capacity];
+    62	}
+
+    63	/* copy constructor
+    64	 * Parameter: original, a Stack (const reference).
+    65	 * Postcondition: I am a copy of original.
+    66	 */
+    67	template<class Item>
+    68	Stack<Item>::Stack(const Stack<Item>& original) {
+    69		makeCopyOf(original);
+    70	}
+
+    71	/* utility method containing code refactored from
+    72	 *  the copy constructor and operator=.
+    73	 * Parameter: original, a Stack (const reference).
+    74	 * Precondition: original.myCapacity > 0.
+    75	 * Postcondition: I am a copy of original.
+    76	 */
+    77	template<class Item>
+    78	void Stack<Item>::makeCopyOf(const Stack<Item>& original) {
+    79		myCapacity = original.myCapacity;
+    80		myArray = new Item[myCapacity];
+
+    81		for (unsigned i = 0; i < myCapacity; i++) {
+    82			myArray[i] = original.myArray[i];
+    83		}
+    84		mySize = original.mySize;
+    85	}
+
+    86	/*
+    87	 * Tests if the stack is empty
+    88	 * precondition: Stack must exist
+    89	 * returns: a boolean value indicating if whether or not the
+    90	 * 			stack is empty
+    91	 * @author (lab): Duncan Van Keulen
+    92	 */
+    93	template<class Item>
+    94	bool Stack<Item>::isEmpty() const {
+    95		return mySize == 0;
+    96	}
+
+    97	/*
+    98	 * Tests if the stack is full
+    99	 * precondition: Stack must exist
+   100	 * returns: a boolean value indicating if whether or not the
+   101	 * 			stack is full
+   102	 * @author (lab): Duncan Van Keulen
+   103	 */
+   104	template<class Item>
+   105	bool Stack<Item>::isFull() const {
+   106		return mySize >= myCapacity;
+   107	}
+
+   108	/*
+   109	 * Returns the item at the top of the stack
+   110	 * precondition: The stack must exist and not be empty
+   111	 * returns: The item that was last pushed to the stack
+   112	 * @author (lab): Duncan Van Keulen
+   113	 */
+   114	template<class Item>
+   115	Item Stack<Item>::peekTop() const {
+   116		if ( isEmpty() ) {
+   117			throw StackException("PeekTop()", "stack is empty");
+   118		}
+   119		else {
+   120			return myArray[mySize - 1];
+   121		}
+   122	}
+
+   123	/*
+   124	 * Pushes an item to the stack
+   125	 * @param Item it: The item to be pushed to the stack
+   126	 * precondition: Stack must exist and not be full
+   127	 * postcondition: Item will be pushed to stack and
+   128	 * 				  mySize will be incremented
+   129	 * @author (lab): Duncan Van Keulen
+   130	 */
+   131	template<class Item>
+   132	void Stack<Item>::push(Item it) {
+   133		if ( isFull() ) {
+   134			throw StackException("push()", "stack is full");
+   135		}
+   136		myArray[mySize] = it;
+   137		mySize++;
+   138	}
+
+   139	/*
+   140	 * Pops an item from the list (removes and returns)
+   141	 * precondition: The stack must exist and not be empty
+   142	 * postcondition: The last item pushed will be removed and returned
+   143	 * Returns: The item that was removed
+   144	 * @author (lab): Duncan Van Keulen
+   145	 */
+   146	template<class Item>
+   147	Item Stack<Item>::pop() {
+   148		if ( isEmpty() ) {
+   149			throw StackException("pop():", "stack is empty");
+   150		}
+   151		--mySize;
+   152		return myArray[mySize];
+   153	}
+
+   154	/*
+   155	 * Sets the capacity of the Stack
+   156	 * precondition: newCapacity must be greater than current capacity
+   157	 * @param unsigned newCapacity: The new capacity for the Stack
+   158	 * postcondition: The items in the Stack will be preserved but
+   159	 * 				  the capacity will be increased
+   160	 * @author: Duncan Van Keulen
+   161	 */
+   162	template<class Item>
+   163	void Stack<Item>::setCapacity(unsigned newCapacity) {
+   164		// don't do anything if it's already at the correct capacity
+   165		if (newCapacity == myCapacity) { return; }
+   166		// error case handling
+   167		if (newCapacity < getCapacity()) {
+   168			throw invalid_argument(
+   169			"Stack::setCapacity: newCapacity is less than current capacity");
+   170		}
+   171		// setting capacity logic
+   172		Item* newArray = new Item[newCapacity];
+   173		for (unsigned i = 0; i < myCapacity; i++) {
+   174			newArray[i] = myArray[i];
+   175		}
+   176		delete [] myArray;
+   177		myArray = newArray;
+   178		myCapacity = newCapacity;
+
+   179	}
+
+   180	/* destructor
+   181	 * Postcondition: myCapacity == 0 && mySize == 0
+   182	 *             && myArray has been deallocated.
+   183	 */
+   184	template<class Item>
+   185	Stack<Item>::~Stack() {
+   186		delete [] myArray;
+   187		myArray = NULL;
+   188		myCapacity = 0;
+   189		mySize = 0;
+   190	}
+
+   191	/* assignment operator
+   192	 * Parameter: original, a Stack (const reference).
+   193	 * Postcondition: I am a copy of original
+   194	 *              && I have been returned.
+   195	 */
+   196	template<class Item>
+   197	Stack<Item>& Stack<Item>::operator=(const Stack<Item>& original) {
+   198		if (this != &original) {
+   199			delete [] myArray;
+   200			makeCopyOf(original);
+   201		}
+   202		return *this;
+   203	}
+
+   204	#endif
+
+]0;duncv@duncv-VirtualBox: ~/eclipse-workspace/djv78/proj08[01;32mduncv@duncv-VirtualBox[00m:[01;34m~/eclipse-workspace/djv78/proj08[00m$ cat -b Exc[K[K[KException.h
+     1	/* Exception.h defines a class to consolidate the functionality
+     2	 *  that different kinds of exceptions have in common.
+     3	 * Joel Adams, for CS 112 at Calvin College.
+     4	 */
+
+     5	#ifndef EXCEPTION_H_
+     6	#define EXCEPTION_H_
+
+     7	#include <string>    // string
+     8	#include <iostream>  // ostream
+     9	using namespace std;
+
+    10	class Exception {
+    11	public:
+    12	   /* construct an Exception
+    13	    * Parameters: whereThrown, a string naming the method that threw me.
+    14	    *              message, a description of the problem.
+    15	    */
+    16	   Exception(const string& whereThrown, const string& message) { 
+    17	      myLocation = whereThrown; 
+    18	      myMessage = message; 
+    19	   }
+    20	   
+    21	   virtual ~Exception() {}
+    22	   
+    23	   /* build a string representation of myself
+    24	    * (polymorphic, in case you want to override it)
+    25	    */
+    26	   virtual string asString() const { 
+    27	   	  return "*** " + className() + " in " + myLocation + ": "
+    28	                  + myMessage; 
+    29	   }
+    30	   
+    31	   /* polymorphic method to retrieve the name of the class
+    32	    *  (used by asString() above)
+    33	    */
+    34	   virtual string className() const {
+    35	   	  return "Exception";
+    36	   }
+
+    37	private:
+    38	   string myLocation;    // the method where I was thrown
+    39	   string myMessage;     // a description of the problem
+    40	};  // Exception
+
+    41	/* insert an Exception (or its subclass) into an ostream
+    42	 * Parameters: out, an ostream;
+    43	 *             e, an Exception.
+    44	 * Postcondition: out contains e's string representation
+    45	 *               && out is the return-value.
+    46	 */
+    47	inline ostream& operator<<(ostream& out, const Exception& e) {
+    48		out << e.asString();
+    49		return out;
+    50	}
+    51	      
+    52	#endif /*EXCEPTION_H_*/
+
+]0;duncv@duncv-VirtualBox: ~/eclipse-workspace/djv78/proj08[01;32mduncv@duncv-VirtualBox[00m:[01;34m~/eclipse-workspace/djv78/proj08[00m$ cat -b StackException.h 
+     1	/* StackException.h models exceptions in stack operations.
+     2	 * Joel Adams, for CS 112 at Calvin College.
+     3	 * Student Name: Duncan Van Keulen
+     4	 * Date: 26 March 2019
+     5	 */
+
+     6	#ifndef STACK_EXCEPTION
+     7	#define STACK_EXCEPTION
+
+     8	#include <iostream>
+     9	using namespace std;
+
+    10	 
+    11	class StackException {
+    12	public:
+    13	   StackException(const string& whereThrown,
+    14	                  const string& message) { 
+    15	       myLocation = whereThrown; 
+    16	       myMessage = message; 
+    17	   }
+
+    18	   string asString() const {
+    19	       return "*** StackException in " +
+    20	               myLocation + ": " + myMessage; 
+    21	   }
+
+    22	private:
+    23	   string myLocation;
+    24	   string myMessage;
+    25	};  // StackException
+
+
+    26	/* Function to allow a StackException (or a subclass) to be displayed
+    27	 * via an ostream.
+    28	 * Parameters: out, an ostream;
+    29	 *             se, a StackException.
+    30	 * Postcondition: the string representation of se has been inserted
+    31	 * into out
+    32	 *             && return-value == out.
+    33	 */
+    34	inline ostream& operator<<(ostream& out, const StackException& se) {
+    35	      out << se.asString();
+    36	      return out;
+    37	}
+
+    38	#endif
+
+]0;duncv@duncv-VirtualBox: ~/eclipse-workspace/djv78/proj08[01;32mduncv@duncv-VirtualBox[00m:[01;34m~/eclipse-workspace/djv78/proj08[00m$ cat -b Wu[K[KQueueException.h 
+     1	/* QueueException.h provides a simple exception class for Queues to throw,
+     2	 *   plus subclasses (EmptyQueueException, FullQueueException)
+     3	 *   for more fine-grained error-handling.
+     4	 * See Exception.h for its superclass.
+     5	 * Joel Adams, for CS 112 at Calvin College.
+     6	 */
+     7	 
+     8	#ifndef QUEUEEXCEPTION_H_
+     9	#define QUEUEEXCEPTION_H_
+
+    10	#include "Exception.h"
+
+    11	class QueueException : public Exception {
+    12	public:
+    13	   QueueException(const string& whereThrown, const string& message)
+    14	   : Exception(whereThrown, message)
+    15	   {}
+    16	   
+    17	   virtual string className() const {
+    18	   	 return "QueueException";
+    19	   }
+    20	};
+
+    21	class EmptyQueueException : public QueueException {
+    22	public:
+    23	   EmptyQueueException(const string& whereThrown)
+    24	    : QueueException(whereThrown, "queue is empty")
+    25	   {}
+    26	   
+    27	   virtual string className() const {
+    28	   	  return "EmptyQueueException";
+    29	   }
+    30	};
+
+    31	class FullQueueException : public QueueException {
+    32	public:
+    33	   FullQueueException(const string& whereThrown)
+    34	    : QueueException(whereThrown, "queue is full")
+    35	   {}
+    36	   
+    37	   virtual string className() const {
+    38	   	  return "FullQueueException";
+    39	   }
+    40	};
+
+
+    41	#endif /*QUEUEEXCEPTION_H_*/
+
+]0;duncv@duncv-VirtualBox: ~/eclipse-workspace/djv78/proj08[01;32mduncv@duncv-VirtualBox[00m:[01;34m~/eclipse-workspace/djv78/proj08[00m$ cat -b tester.cpp 
+     1	/* tester.cpp drives the testing of the Queue classes.
+     2	 * Joel Adams, for CS 112 at Calvin College.
+     3	 */
+
+     4	#include "ArrayQueueTester.h"
+     5	#include "PalindromeDetectorTester.h"
+     6	 
+     7	 int main() {
+     8	 	ArrayQueueTester aqt;
+     9	 	aqt.runTests();
+    10	 	PalindromeDetectorTester pdt;
+    11	 	pdt.runTests();
+    12	 }
+]0;duncv@duncv-VirtualBox: ~/eclipse-workspace/djv78/proj08[01;32mduncv@duncv-VirtualBox[00m:[01;34m~/eclipse-workspace/djv78/proj08[00m$ cat -b p[KPalindromeDetector.h[K[KTester.h
+     1	/* The header file for the unit test of the PalindromeDetector class
+     2	 * palindromeTester.h
+     3	 *
+     4	 *  Created on: Apr 16, 2019
+     5	 *      Author: Duncan Van Keulen (djv78)
+     6	 */
+
+     7	#ifndef PALINDROMEDETECTORTESTER_H_
+     8	#define PALINDROMEDETECTORTESTER_H_
+
+     9	#include "PalindromeDetector.h"
+    10	#include <iostream>
+    11	#include <cassert>
+    12	#include <fstream>
+    13	using namespace std;
+
+    14	class PalindromeDetectorTester {
+    15	public:
+    16		void runTests();
+    17		void testConstructors();
+    18		void testIsPalindrome();
+    19		void testDetectPalindromes();
+    20	};
+
+    21	#endif /* PALINDROMEDETECTORTESTER_H_ */
+]0;duncv@duncv-VirtualBox: ~/eclipse-workspace/djv78/proj08[01;32mduncv@duncv-VirtualBox[00m:[01;34m~/eclipse-workspace/djv78/proj08[00m$ cat -b PalindromeDetectorTester.h[Kcpp
+     1	/* The header source for the unit test of the PalindromeDetector class
+     2	 * palindromeTester.cpp
+     3	 *
+     4	 *  Created on: Apr 16, 2019
+     5	 *      Author: Duncan Van Keulen (djv78)
+     6	 */
+
+     7	#include "PalindromeDetectorTester.h"
+
+     8	void PalindromeDetectorTester::runTests() {
+     9		cout << "Testing PalindromeDetector class... " << endl;
+    10		testConstructors();
+    11		testIsPalindrome();
+    12		testDetectPalindromes();
+
+    13		cout << "All tests passed!" << flush;
+    14	}
+
+    15	void PalindromeDetectorTester::testConstructors() {
+    16		cout << "- constructors (and getter methods)... " << flush;
+
+    17		// default constructor
+    18		PalindromeDetector defPD;
+    19		assert( defPD.getInFile() == "" );
+    20		assert( defPD.getOutFile() == "" );
+    21		cout << " 0 " << flush;
+
+    22		// explicit constructor
+    23		PalindromeDetector pd("palindromeTest.txt", "palindromeTestOut.txt");
+    24		assert( pd.getInFile() == "palindromeTest.txt");
+    25		cout << " 1a " << flush;
+
+    26		assert ( pd.getOutFile() == "palindromeTestOut.txt");
+    27		cout << " 1b " << flush;
+
+    28		cout << " Passed!" << endl;
+    29	}
+
+    30	void PalindromeDetectorTester::testIsPalindrome() {
+    31		cout << "- isPalindrome()... " << flush;
+
+    32		PalindromeDetector pd;
+
+    33		// make sure it correctly identifies true palindromes
+    34		assert( pd.isPalindrome("kayak") == true );
+    35		assert( pd.isPalindrome("racecar") == true );
+    36		assert( pd.isPalindrome("madamimadam") == true );
+    37		cout << " 0 " << flush;
+
+    38		// make sure it correctly identifies false palindromes
+    39		assert( pd.isPalindrome("blah") == false );
+    40		assert( pd.isPalindrome("Hi, this is not a palindrome") == false );
+    41		assert( pd.isPalindrome(" ") == false );
+    42		assert( pd.isPalindrome("\n") == false );
+    43		assert( pd.isPalindrome("") == false );
+    44		assert( pd.isPalindrome("Sit on a potato pan, Otis!") == false ); // although this is a palindrome,
+    45		//								  this method is not built to get around punctuation/capitalization
+    46		cout << " 1 " << flush;
+
+    47		cout << " Passed!" << endl;
+    48	}
+
+    49	void PalindromeDetectorTester::testDetectPalindromes() {
+    50		cout << "- detectPalindromes()... " << flush;
+    51		PalindromeDetector pd("PDTest.txt", "PDTestOut.txt");
+
+    52		pd.detectPalindromes();
+
+    53		ifstream outFin("PDTestOut.txt");
+    54		assert( outFin.is_open() );
+
+    55		// test each line of the PDTest.txt file to make sure it's behaving correctly
+    56		string oLine;
+    57		getline(outFin, oLine);
+    58		assert( oLine == R"("Madam, I'm Adam" ***)");
+    59		cout << " 0a " << flush;
+    60		getline(outFin, oLine);
+    61		assert( oLine == "This is not a palindrome");
+    62		cout << " 0b " << flush;
+    63		getline(outFin, oLine);
+    64		assert( oLine == "");
+    65		cout << " 0c " << flush;
+    66		getline(outFin, oLine);
+    67		assert( oLine == "neither is that blank line or this, but the next line should be");
+    68		cout << " 0d " << flush;
+    69		getline(outFin, oLine);
+    70		assert( oLine == R"("Sit on a potato pan, Otis!" ***)");
+    71		cout << " 0e " << flush;
+    72		getline(outFin, oLine);
+    73		assert( oLine == "kayak ***");
+    74		cout << " 0f " << flush;
+    75		getline(outFin, oLine);
+    76		assert( oLine == "racecar ***");
+    77		cout << " 0g " << flush;
+
+    78		outFin.close();
+
+    79	 	// run palindrome detection on palindromeTest.txt
+    80	 	PalindromeDetector pd1("palindromeTest.txt", "palindromeTestOutput.txt");
+    81	 	pd1.detectPalindromes();
+    82	 	cout << " 1 (look at palindromeTestOutput.txt) " << flush;
+
+    83		cout << " Passed!" << endl;
+    84	}
+]0;duncv@duncv-VirtualBox: ~/eclipse-workspace/djv78/proj08[01;32mduncv@duncv-VirtualBox[00m:[01;34m~/eclipse-workspace/djv78/proj08[00m$ cat -b PalindromeDetectorTester.cpp[2Ph[1P.h[1P.h[1P.h[1P.h[1P.h[1P.h
+     1	/* The header file for the PalindromeDetector class
+     2	 * PalindromeDetector.h
+     3	 *
+     4	 *  Created on: Apr 18, 2019
+     5	 *      Author: Duncan Van Keulen (djv78)
+     6	 */
+
+     7	#ifndef PALINDROMEDETECTOR_H_
+     8	#define PALINDROMEDETECTOR_H_
+
+     9	#include <string>
+    10	#include <iostream>
+    11	#include <fstream>
+    12	#include <cassert>
+    13	#include "Stack.h"
+    14	#include "ArrayQueue.h"
+    15	using namespace std;
+
+    16	class PalindromeDetector {
+    17	public:
+    18		// default constructor
+    19		PalindromeDetector() { inFile = outFile = ""; }
+    20		// explicit constructor
+    21		PalindromeDetector(const string& inFilename, const string& outFilename);
+
+    22		// getter methods for input file and output file
+    23		string getInFile() const { return inFile; }
+    24		string getOutFile() const { return outFile; }
+
+    25		// palindrome detection methods
+    26		bool isPalindrome(const string& line) const;
+    27		void detectPalindromes();
+
+    28	private:
+    29		string inFile;
+    30		string outFile;
+    31	};
+
+    32	#endif /* PALINDROMEDETECTOR_H_ */
+]0;duncv@duncv-VirtualBox: ~/eclipse-workspace/djv78/proj08[01;32mduncv@duncv-VirtualBox[00m:[01;34m~/eclipse-workspace/djv78/proj08[00m$ cat -b PalindromeDetector.h[Kcpp
+     1	/* The source file for the Palindrome Detector class
+     2	 * PalindromeDetector.cpp
+     3	 *
+     4	 *  Created on: Apr 18, 2019
+     5	 *      Author: Duncan Van Keulen (djv78)
+     6	 */
+
+     7	#include "PalindromeDetector.h"
+
+     8	/* Constructor for the PalindromeDetector class
+     9	 * @param const string& inFilename: the name of the desired input file
+    10	 * @param const string& outFilename: the name of the desired output file
+    11	 * postcondition: The inFile and outFile will be initialized
+    12	 * 				  based on the input filename.
+    13	 * @author: Duncan Van Keulen (project)
+    14	 */
+    15	PalindromeDetector::PalindromeDetector(const string& inFilename, const string& outFilename) {
+    16		inFile = inFilename;
+    17		outFile = outFilename;
+
+    18		// this is logic to automatically add "Out" before the .txt extension to determine
+    19		// the outFile name automatically
+    20	//	string::size_type position;
+    21	//	position = filename.find ('.');
+    22	//	outFile = filename.substr(0,position) + "Out" + ".txt";
+
+    23	}
+
+    24	/* Detect if a string is a palindrome
+    25	 * @param const string& line: The one-line string to be examined
+    26	 * precondition: PalindromeDetector must exist, string must not contain
+    27	 * 		punctuation (including spaces) and letters must be a consistent case
+    28	 * @return: A bool indicating the whether the string is a palindrome or not
+    29	 * @author: Duncan Van Keulen (djv78)
+    30	 */
+    31	bool PalindromeDetector::isPalindrome(const string& line) const {
+    32		Stack<char> pStack(1);
+    33		ArrayQueue<char> pQueue(1);
+
+    34		for (unsigned index = 0; index < line.size(); index++) {
+    35			// try to push character to the stack and double size if full
+    36			try {
+    37				pStack.push( line[index] );
+    38			} catch (const StackException& se) {
+    39				pStack.setCapacity( (pStack.getCapacity() * 2) );
+    40				pStack.push( line[index] );
+    41			}
+
+    42			// try to append character to the queue and double size if full
+    43			try {
+    44				pQueue.append( line[index] );
+    45			} catch (const FullQueueException& fq) {
+    46				pQueue.setCapacity( (pQueue.getCapacity() * 2) );
+    47				pQueue.append( line[index] );
+    48			}
+    49		}
+
+    50		// if line's size is 0 or 1, we're saying it's not a palindrome
+    51		if ( (pStack.getSize() == 1 && pQueue.getSize() == 1) ||
+    52				(pStack.getSize() == 0 && pQueue.getSize() == 0) ) {
+    53			return false;
+    54		}
+
+    55		// if any of the characters does not match forward and backward,
+    56		// return false because it's not a palindrome
+    57		while ( !pStack.isEmpty() && !pQueue.isEmpty() ) {
+    58			if ( pStack.pop() != pQueue.remove() ) {
+    59				return false;
+    60			}
+    61		}
+
+    62		return true;
+    63	}
+
+    64	/* Detect palindromes in a file
+    65	 * Opens streams for the inFile and outFile and
+    66	 * writes asterisks after lines that are palindromes in
+    67	 * the out file
+    68	 *
+    69	 * precondition: inFile must be correctly initialized to a file name
+    70	 * postcondition: asterisks will be written after the lines that are
+    71	 * palindromes in the file with outFile handle
+    72	 *
+    73	 * @author: Duncan Van Keulen (project)
+    74	 */
+    75	void PalindromeDetector::detectPalindromes() {
+    76		ifstream inFStream(inFile);
+    77		ofstream outFStream(outFile);
+    78		assert( inFStream.is_open() );
+    79		assert( outFStream.is_open() );
+    80		string line;
+
+    81		// loop until the end of the file
+    82		while (inFStream) {
+    83			getline(inFStream, line);
+    84			outFStream << line;
+
+    85			// strip punctuation and case
+    86			string strippedLine;
+    87			for (unsigned i = 0; i < line.size(); i++) {
+    88				// ignore punctuation
+    89				if (ispunct( line[i] ) || line[i] == ' ') {
+    90					continue;
+    91				}
+    92				// otherwise, concatenate the lowercased character to strippedString
+    93				strippedLine += tolower( line[i] );
+    94			}
+    95			// add asterisks and a newline if it is a palindrome
+    96			if ( isPalindrome(strippedLine) ) {
+    97				outFStream << " ***";
+    98			}
+    99			outFStream << "\n";
+   100		}
+
+   101		// close the streams
+   102		inFStream.close();
+   103		outFStream.close();
+
+   104	}
+]0;duncv@duncv-VirtualBox: ~/eclipse-workspace/djv78/proj08[01;32mduncv@duncv-VirtualBox[00m:[01;34m~/eclipse-workspace/djv78/proj08[00m$ cat 0-b[K[K[K0-[K[K-b PDTest.txt
+     1	"Madam, I'm Adam"
+     2	This is not a palindrome
+
+     3	neither is that blank line or this, but the next line should be
+     4	"Sit on a potato pan, Otis!"
+     5	kayak
+     6	racecar]0;duncv@duncv-VirtualBox: ~/eclipse-workspace/djv78/proj08[01;32mduncv@duncv-VirtualBox[00m:[01;34m~/eclipse-workspace/djv78/proj08[00m$ cat -b PDTestOut.txt[Kt 
+     1	"Madam, I'm Adam" ***
+     2	This is not a palindrome
+
+     3	neither is that blank line or this, but the next line should be
+     4	"Sit on a potato pan, Otis!" ***
+     5	kayak ***
+     6	racecar ***
+     7	racecar ***
+]0;duncv@duncv-VirtualBox: ~/eclipse-workspace/djv78/proj08[01;32mduncv@duncv-VirtualBox[00m:[01;34m~/eclipse-workspace/djv78/proj08[00m$ cat -b palindromeTest.txt 
+     1	Drawn Onward
+
+     2	by Felicia Lamport
+     3	extended by Joel Adams        
+
+     4	The learned men of Rome
+     5	could turn a palindrome
+     6	but they were not the first.
+
+     7	For Adam, says the myth,
+     8	began conversing with
+     9	a sentence that reversed:
+    10	"Madam, I'm Adam"
+    11	seemed
+    12	a phrase to be esteemed
+    13	the moment it was popped.
+    14	But that was not to be
+    15	- his lady instantly said
+    16	"Eve"
+    17	which left it topped.
+
+    18	Eve damned Eden; mad Eve
+    19	bore two sons,
+    20	as goes the fable,
+    21	the first named
+    22	Cain, a maniac,
+    23	who slew his brother Abel.
+    24	He lived as a devil, eh?
+    25	Violence begat violence, until today
+    26	we panic in a pew,
+    27	the cycle turns anew
+    28	and descendents of Ned Ludd
+    29	-- dumb mobs -- bomb mud.
+
+    30	Asked his favorite dessert, Archimedes said,
+    31	"I prefer PI"
+
+    32	And Napoleon, post-Josephine, mused,
+    33	"Able was I, ere I saw Elba,"
+    34	as he met his Waterloo, confused.
+
+    35	Anonymous, the most
+    36	prolific bard, can boast
+    37	of being host
+    38	to these:
+
+    39	"Was it a car or a cat I saw ?"
+
+    40	"Some men interpret nine memos."
+
+    41	"Lewd did I live, evil I did dwel."
+
+    42	"Sex at noon taxes."
+
+    43	"A man, a plan, a canal, Panama!"
+
+    44	"Stop, murder us not, tonsured rumpots!"
+
+    45	"Straw? No, too stupid a fad. I put soot on warts."
+
+    46	"Doc, note: I dissent. A fast never prevents a fatness. I diet on cod."
+
+    47	"Kay, a red nude, peeped under a yak."
+
+    48	and that marvel of marvels:
+
+    49	"Sit on a potato pan, Otis!"
+
+    50	What span, what palindromic bliss!
+
+    51	I've wrung the alphabet
+    52	repeatedly to get
+    53	a Janus-phrase so spry
+    54	at backwards somersaults.
+    55	But as each hope turns false,
+    56	in words, alas, drown I.]0;duncv@duncv-VirtualBox: ~/eclipse-workspace/djv78/proj08[01;32mduncv@duncv-VirtualBox[00m:[01;34m~/eclipse-workspace/djv78/proj08[00m$ cat -b Palin[K[K[K[K[KpalindromeTest.txt [1@O[1@u[1@t[7@put.txt[1P[1P[1P[1P 
+     1	Drawn Onward ***
+
+     2	by Felicia Lamport
+     3	extended by Joel Adams        
+
+     4	The learned men of Rome
+     5	could turn a palindrome
+     6	but they were not the first.
+
+     7	For Adam, says the myth,
+     8	began conversing with
+     9	a sentence that reversed:
+    10	"Madam, I'm Adam" ***
+    11	seemed
+    12	a phrase to be esteemed
+    13	the moment it was popped.
+    14	But that was not to be
+    15	- his lady instantly said
+    16	"Eve" ***
+    17	which left it topped.
+
+    18	Eve damned Eden; mad Eve ***
+    19	bore two sons,
+    20	as goes the fable,
+    21	the first named
+    22	Cain, a maniac, ***
+    23	who slew his brother Abel.
+    24	He lived as a devil, eh? ***
+    25	Violence begat violence, until today
+    26	we panic in a pew, ***
+    27	the cycle turns anew
+    28	and descendents of Ned Ludd
+    29	-- dumb mobs -- bomb mud. ***
+
+    30	Asked his favorite dessert, Archimedes said,
+    31	"I prefer PI" ***
+
+    32	And Napoleon, post-Josephine, mused,
+    33	"Able was I, ere I saw Elba," ***
+    34	as he met his Waterloo, confused.
+
+    35	Anonymous, the most
+    36	prolific bard, can boast
+    37	of being host
+    38	to these:
+
+    39	"Was it a car or a cat I saw ?" ***
+
+    40	"Some men interpret nine memos." ***
+
+    41	"Lewd did I live, evil I did dwel." ***
+
+    42	"Sex at noon taxes." ***
+
+    43	"A man, a plan, a canal, Panama!" ***
+
+    44	"Stop, murder us not, tonsured rumpots!" ***
+
+    45	"Straw? No, too stupid a fad. I put soot on warts." ***
+
+    46	"Doc, note: I dissent. A fast never prevents a fatness. I diet on cod." ***
+
+    47	"Kay, a red nude, peeped under a yak." ***
+
+    48	and that marvel of marvels:
+
+    49	"Sit on a potato pan, Otis!" ***
+
+    50	What span, what palindromic bliss!
+
+    51	I've wrung the alphabet
+    52	repeatedly to get
+    53	a Janus-phrase so spry
+    54	at backwards somersaults.
+    55	But as each hope turns false,
+    56	in words, alas, drown I. ***
+    57	in words, alas, drown I. ***
+]0;duncv@duncv-VirtualBox: ~/eclipse-workspace/djv78/proj08[01;32mduncv@duncv-VirtualBox[00m:[01;34m~/eclipse-workspace/djv78/proj08[00m$ cd Debug
+]0;duncv@duncv-VirtualBox: ~/eclipse-workspace/djv78/proj08/Debug[01;32mduncv@duncv-VirtualBox[00m:[01;34m~/eclipse-workspace/djv78/proj08/Debug[00m$ ls
+ArrayQueueTester.d  objects.mk            PalindromeDetectorTester.d  sources.mk  tester.o
+ArrayQueueTester.o  PalindromeDetector.d  PalindromeDetectorTester.o  subdir.mk
+makefile            PalindromeDetector.o  [0m[01;32mproj08[0m                      tester.d
+]0;duncv@duncv-VirtualBox: ~/eclipse-workspace/djv78/proj08/Debug[01;32mduncv@duncv-VirtualBox[00m:[01;34m~/eclipse-workspace/djv78/proj08/Debug[00m$ make all
+make: Nothing to be done for 'all'.
+]0;duncv@duncv-VirtualBox: ~/eclipse-workspace/djv78/proj08/Debug[01;32mduncv@duncv-VirtualBox[00m:[01;34m~/eclipse-workspace/djv78/proj08/Debug[00m$ cd ..
+]0;duncv@duncv-VirtualBox: ~/eclipse-workspace/djv78/proj08[01;32mduncv@duncv-VirtualBox[00m:[01;34m~/eclipse-workspace/djv78/proj08[00m$ ./Debug/proj-[K08
+Testing class ArrayQueue...
+- testing constructor...  1  2  Passed!
+- testing append(), getFirst(), getLast() ...  0a  0b  1  2  3  4  5 Passed, but wrap-around not tested...
+- testing remove()...  0  1  2  3  4a  4b  4c  4d  5  6a  6b  6c Passed!
+- testing copy constructor...  1  2  3 Passed!
+- testing assignment...  1  2  3  4  5  6  7 Passed!
+- testing setCapacity()... 1a 1b 1c 2a 2b 2c 2d 2e 2f 3a 3b 3c 3d 3e 3f 4a 4b 4c 4d 4e 4f 5 6 Passed!
+All tests passed!
+
+Testing PalindromeDetector class... 
+- constructors (and getter methods)...  0  1a  1b  Passed!
+- isPalindrome()...  0  1  Passed!
+- detectPalindromes()...  0a  0b  0c  0d  0e  0f  0g  1 (look at palindromeTestOutput.txt)  Passed!
+All tests passed!]0;duncv@duncv-VirtualBox: ~/eclipse-workspace/djv78/proj08[01;32mduncv@duncv-VirtualBox[00m:[01;34m~/eclipse-workspace/djv78/proj08[00m$ exit
+
+Script done on 2019-04-18 17:11:33-0400

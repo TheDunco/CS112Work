@@ -1,0 +1,938 @@
+Script started on Mon 29 Apr 2019 06:55:04 PM EDT
+djv78@gold25:/home/cs/112/current/djv78/proj09$ ls
+BST.h  BST_Tester.cpp  BST_Tester.h  Debug  Exception.h  Experiment.cpp  Experiment.h  Proj09_Results.ods  Proj09_Results.pdf  tester.cpp  typescript
+djv78@gold25:/home/cs/112/current/djv78/proj09$ cat -b tester.cpp 
+     1	/* tester.cpp is the driver file for the BST class
+     2	 */
+     3	#include "BST_Tester.h"
+     4	#include "Experiment.h"
+
+     5	int main() {
+     6		BST_Tester bstt;
+     7		bstt.runTests();	
+
+     8		Experiment exp;
+     9		exp.loop();
+    10	}
+djv78@gold25:/home/cs/112/current/djv78/proj09$ cat -b BST.h
+     1	/* BST.h declares a "classic" binary search tree template of linked nodes.
+     2	 * Joel Adams, for CS 112 at Calvin College.
+     3	 * Student Name: Duncan Van Keulen
+     4	 * Date: 23 April 2019
+     5	 * 
+     6	 * Class Invariant:
+     7	 *   myNumItems == 0 && myRoot == NULL ||
+     8	 *   myNumItems > 0 && 
+     9	 *     myRoot stores the address of a Node containing an item &&
+    10	 *       all items in myRoot->myLeft are less than myRoot->myItem &&
+    11	 *       all items in myRoot->myRight are greater than myRoot->myItem.
+    12	 */
+
+    13	#ifndef BST_H_
+    14	#define BST_H_
+
+    15	#include "Exception.h"
+    16	#include <iostream>
+    17	using namespace std;
+
+    18	template <class Item>
+
+    19	class BST {
+    20	public:
+
+    21		virtual ~BST();
+    22		bool isEmpty() const;
+    23		unsigned getNumItems() const;
+
+    24		void traverseInorder();
+    25		void traversePreorder();
+    26		void traversePostorder();
+
+    27		void insert(const Item& it);
+    28		BST();
+    29		bool contains(const Item& it) const;
+
+    30		unsigned getHeight() const;
+
+    31	private:
+    32		struct Node {
+    33			Node(const Item& it);
+    34			virtual ~Node();
+
+    35			void nodeInsert(const Item& it);
+    36			bool nodeContains(const Item& it) const;
+
+    37			unsigned nodeGetHeight() const;
+
+    38			void traverseInorder();
+    39			void traversePreorder();
+    40			void traversePostorder();
+    41			virtual void processItem();
+
+    42			Item myItem;
+    43			Node* myLeft;
+    44			Node* myRight;
+    45		};
+    46		
+    47		Node* myRoot;
+    48		unsigned myNumItems;
+    49		friend class BST_Tester;
+    50	};
+
+
+    51	#include "BST.h"
+
+
+    52	template <class Item>
+    53	BST<Item>::BST() {
+    54		myNumItems = 0;
+    55		myRoot = NULL;
+    56	}
+
+    57	template <class Item>
+    58	BST<Item>::~BST() {
+    59		delete myRoot;
+    60		myRoot = NULL;
+    61		myNumItems = 0;
+    62	}
+
+    63	template <class Item>
+    64	BST<Item>::Node::Node(const Item& it) {
+    65	   myItem = it;
+    66	   myLeft = NULL;
+    67	   myRight = NULL;
+    68	}
+
+    69	template <class Item>
+    70	BST<Item>::Node::~Node() {
+    71		delete myLeft;
+    72		delete myRight;
+    73	}
+
+    74	template <class Item>
+    75	bool BST<Item>::isEmpty() const {
+    76		return myNumItems == 0;
+    77	}
+
+    78	template <class Item>
+    79	unsigned BST<Item>::getNumItems() const {
+    80		return myNumItems;
+    81	}
+
+
+    82	// Traversal methods...
+
+    83	/* Process the item ( in this case, cout it)
+    84	 * postcondition: Item will be processed
+    85	 */
+    86	template <class Item>
+    87	void BST<Item>::Node::processItem() {
+    88			cout << ' ' << myItem;
+    89	}
+
+    90	/* BST Preorder Traversal
+    91	 * Initiate Node perorder traversal recursion
+    92	 */
+    93	template <class Item>
+    94	void BST<Item>::traversePreorder() {
+    95		if ( !isEmpty() ) {
+    96			myRoot->traversePreorder();
+    97		}
+    98	}
+
+    99	/* Node Preorder Traversal
+   100	 * 1. Process Item
+   101	 * 2. Recurse left
+   102	 * 3. Recurse right
+   103	 */
+   104	template <class Item>
+   105	void BST<Item>::Node::traversePreorder() {
+   106		processItem();
+   107		if (myLeft != NULL) {
+   108			myLeft->traversePreorder();
+   109		}
+   110		if (myRight != NULL) {
+   111			myRight->traversePreorder();
+   112		}
+   113	}
+
+   114	/* BST Postorder Traversal
+   115	 * Initiate Node postorder traversal recursion
+   116	 */
+   117	template <class Item>
+   118	void BST<Item>::traversePostorder() {
+   119		if ( !isEmpty() ) {
+   120			myRoot->traversePostorder();
+   121		}
+   122	}
+   123	/* Node Postorder Traversal
+   124	 * 1. Recurse right
+   125	 * 2. Recurse left
+   126	 * 3. Process Item
+   127	 */
+   128	template <class Item>
+   129	void BST<Item>::Node::traversePostorder() {
+   130		if (myLeft != NULL) {
+   131			myLeft->traversePostorder();
+   132		}
+   133		if (myRight != NULL) {
+   134			myRight->traversePostorder();
+   135		}
+   136		processItem();
+   137	}
+
+   138	/* BST Inorder Traversal
+   139	 * Initiate Node Inorder traversal recursion
+   140	 */
+   141	template <class Item>
+   142	void BST<Item>::traverseInorder() {
+   143		if ( !isEmpty() ) {
+   144			myRoot->traverseInorder();
+   145		}
+   146	}
+
+   147	/* Node Inorder Traversal
+   148	 * 1. Recurse left
+   149	 * 2. Process Item
+   150	 * 3. Recurse right
+   151	 */
+   152	template <class Item>
+   153	void BST<Item>::Node::traverseInorder() {
+   154		if (myLeft != NULL) {
+   155			myLeft->traverseInorder();
+   156		}
+   157		processItem();
+   158		if (myRight != NULL) {
+   159			myRight->traverseInorder();
+   160		}
+   161	}
+
+   162	/* Insert an item into the BST
+   163	 * @param const Item& it: The item to be added to the BST
+   164	 * precondition: Item cannot already be in the BST
+   165	 * postcondition: Item will be added to the BST
+   166	 * @author: Duncan Van Keulen (lab)
+   167	 */
+   168	template <class Item>
+   169	void BST<Item>::insert(const Item& it) {
+   170		if ( isEmpty() ) {
+   171			myRoot = new Node(it);
+   172		} else {
+   173			myRoot->nodeInsert(it);
+   174		}
+   175		myNumItems++;
+   176	}
+
+   177	/* Node insert method
+   178	 * @param const Item& it: The item to be added to the BST
+   179	 * precondition: Item cannot already be in a Node in the BST
+   180	 * postcondition: If it is greater than the item in the node,
+   181	 * 		it will be added to the left, and if it is greater, it
+   182	 * 		will be added to the right (if the pointer is NULL,
+   183	 * 		otherwise it will recurse to the next node)
+   184	 * @author: Duncan Van Keulen (lab)
+   185	 */
+   186	template <class Item>
+   187	void BST<Item>::Node::nodeInsert(const Item& it) {
+   188		if ( it < myItem) {
+   189			if ( myLeft == NULL ) {
+   190				myLeft = new Node(it);
+   191			} else {
+   192				myLeft->nodeInsert(it);
+   193			}
+   194		}
+   195		else if ( it > myItem) {
+   196			if ( myRight == NULL ) {
+   197				myRight = new Node(it);
+   198			} else {
+   199				myRight->nodeInsert(it);
+   200			}
+   201		}
+   202		else {
+   203			throw Exception("BST::Node::nodeInsert()", "item is already in the tree!\n");
+   204		}
+   205	}
+
+   206	/* Check to see if an Item is in a BST
+   207	 * @param const Item& it: The Item to check the BST for
+   208	 * precondition: BST must exist
+   209	 * @return: A boolean indicating whether or not the
+   210	 * 			Item was found in the BST
+   211	 * @author: Duncan Van Keulen (lab)
+   212	 */
+   213	template <class Item>
+   214	bool BST<Item>::contains(const Item& it) const {
+   215		if ( isEmpty() ) { return false; }
+   216		else if ( myRoot->myItem == it ){
+   217			return true;
+   218		} else {
+   219			return myRoot->nodeContains(it);
+   220		}
+   221	}
+
+   222	/* Check to see if an Item is in a Node
+   223	 * @param const Item& it: The Item to check the Node for
+   224	 * precondition: Node must exist
+   225	 * @return: A boolean indicating whether or not the
+   226	 * 			Item was found in the Node
+   227	 * @author: Duncan Van Keulen (lab)
+   228	 */
+   229	template <class Item>
+   230	bool BST<Item>::Node::nodeContains(const Item& it) const {
+   231		if ( it == myItem ) { return true; }
+   232		else if ( it < myItem ) {
+   233			if ( myLeft == NULL ) { return false; }
+   234			else {
+   235				myLeft->nodeContains(it);
+   236			}
+   237		}
+   238		else if ( it > myItem ) {
+   239			if ( myRight == NULL ) { return false; }
+   240			else {
+   241				myRight->nodeContains(it);
+   242			}
+   243		}
+   244	}
+
+   245	/* Get the height of the tree
+   246	 * precondition: tree must have a root node
+   247	 * @return the height of the tree
+   248	 * @author: Duncan Van Keulen (project)
+   249	 */
+   250	template <class Item>
+   251	unsigned BST<Item>::getHeight() const { // @suppress("No return")
+   252		unsigned myLeftHeight;
+   253		unsigned myRightHeight;
+
+   254		if ( isEmpty() ) { return 0; }
+   255		else if ( myRoot->myLeft == NULL && myRoot->myRight == NULL ) {
+   256			return 1;
+   257		}
+
+   258		// if there is a left node, start recursing left to find the height
+   259		if ( myRoot->myLeft != NULL ) {
+   260			myLeftHeight = myRoot->myLeft->nodeGetHeight();
+   261		}
+   262		// if there is a right node, start recursing right to find the height
+   263		if ( myRoot->myRight != NULL ) {
+   264			myRightHeight = myRoot-> myRight->nodeGetHeight();
+   265		}
+
+   266		// return the greater of the two heights
+   267		if ( myLeftHeight == myRightHeight ) { return myLeftHeight + 1; }
+   268		else if ( myLeftHeight > myRightHeight ) { return myLeftHeight + 1; }
+   269		else if ( myLeftHeight < myRightHeight ) { return myRightHeight + 1; }
+   270	}
+
+   271	/* Get the height of a node
+   272	 * precondition: node must exist
+   273	 * @returns: recursively returns how many nodes are below the current node
+   274	 * @author: Duncan Van Keulen (project)
+   275	 */
+   276	template <class Item>
+   277	unsigned BST<Item>::Node::nodeGetHeight() const {
+   278		unsigned myLeftHeight = 0;
+   279		unsigned myRightHeight = 0;
+
+   280		if ( myLeft == NULL && myRight == NULL ) { return 1; } // base case
+
+   281		// recurse left
+   282		if ( myLeft != NULL ) {
+   283			myLeftHeight = myLeftHeight + myLeft->nodeGetHeight();
+   284		}
+   285		// recurse right
+   286		if ( myRight != NULL ) {
+   287			myRightHeight = myRightHeight + myRight->nodeGetHeight();
+   288		}
+   289		// return the greater of the two values
+   290		if ( myLeftHeight == myRightHeight ) { return myLeftHeight + 1; }
+   291		else if ( myLeftHeight > myRightHeight ) { return myLeftHeight + 1; }
+   292		else if ( myLeftHeight < myRightHeight ) { return myRightHeight + 1; }
+   293	}
+
+
+   294	#endif /*BST_H_*/
+
+djv78@gold25:/home/cs/112/current/djv78/proj09$ cat -b BST.h     BST_Te ester.h
+     1	/* BST_Tester.h declares a class to test class BST.
+     2	 * Joel Adams, for CS 112 at Calvin College.
+     3	 */
+
+     4	#ifndef BST_TESTER_H_
+     5	#define BST_TESTER_H_
+
+     6	#include "BST.h"
+     7	#include <iostream>
+     8	#include <cassert>
+     9	using namespace std;
+
+    10	class BST_Tester
+    11	{
+    12	public:
+    13		void runTests();
+    14		void testConstructor();
+    15		void testInsert();
+    16		void testContains();
+    17		void testTraverse();
+    18		void testGetHeight();
+    19	};
+
+    20	#endif /*BST_TESTER_H_*/
+djv78@gold25:/home/cs/112/current/djv78/proj09$ cat -b BST_Tester.h cpp
+     1	/* BST_Tester.cpp defines test-methods for class BST.
+     2	 * Joel Adams, for CS 112 at Calvin College.
+     3	 */
+     4	 
+     5	 #include "BST_Tester.h"
+
+     6	void BST_Tester::runTests() {
+     7		cout << "Testing class BST" << endl;
+     8		testConstructor();
+     9		testInsert();
+    10		testContains();
+    11		testTraverse();
+    12		testGetHeight();
+    13		cout << "All tests passed!" << endl;
+    14	}
+
+    15	void BST_Tester::testGetHeight() {
+    16		cout << "Testing getHeight()..." << flush;
+    17		BST<int> bst;
+    18		// empty
+    19		assert( bst.getHeight() == 0 );
+    20		cout << " 0 " << flush;
+    21		// balanced
+    22		bst.insert(44);
+    23		assert( bst.getHeight() == 1 );
+    24		cout << " 1 " << flush;
+    25		bst.insert(22);
+    26		assert( bst.getHeight() == 2 );
+    27		cout << " 2 " << flush;
+    28		bst.insert(66);
+    29		assert( bst.getHeight() == 2 );
+    30		cout << " 3 " << flush;
+    31		bst.insert(77);
+    32		assert( bst.getHeight() == 3 );
+    33		cout << " 4a " << flush;
+    34		bst.insert(55);
+    35		assert( bst.getHeight() == 3 );
+    36		cout << " 4b " << flush;
+    37		bst.insert(33);
+    38		assert( bst.getHeight() == 3 );
+    39		cout << " 4c " << flush;
+    40		bst.insert(11);
+    41		assert( bst.getHeight() == 3 );
+    42		cout << " 4d " << flush;
+    43		bst.insert(88);
+    44		assert( bst.getHeight() == 4 );
+    45		cout << " 4e " << flush;
+    46		// chained ascending
+    47	      BST<int> bst2a;
+    48	      bst2a.insert(11);
+    49	      bst2a.insert(22);
+    50	      bst2a.insert(33);
+    51	      bst2a.insert(44);
+    52	      bst2a.insert(55);
+    53	      bst2a.insert(66);
+    54	      bst2a.insert(77);
+    55	      assert( bst2a.getHeight() == 7 );
+    56	      cout << " 5a " << flush;
+    57		// chained descending
+    58	      BST<int> bst2b;
+    59	      bst2b.insert(77);
+    60	      bst2b.insert(66);
+    61	      bst2b.insert(55);
+    62	      bst2b.insert(44);
+    63	      bst2b.insert(33);
+    64	      bst2b.insert(22);
+    65	      bst2b.insert(11);
+    66	      assert( bst2b.getHeight() == 7 );
+    67	      cout << " 5b " << flush;
+    68		// four 4-node permutations
+    69		BST<int> bst3;
+    70		bst3.insert(44);
+    71		assert( bst3.getHeight() == 1 );
+    72	      cout << " 6a " << flush;
+    73		bst3.insert(22);
+    74		assert( bst3.getHeight() == 2 );
+    75	      cout << " 6b " << flush;
+    76		bst3.insert(33);
+    77		assert( bst3.getHeight() == 3 );
+    78	      cout << " 6c " << flush;
+    79		bst3.insert(55);
+    80		assert( bst3.getHeight() == 3 );
+    81	      cout << " 6d " << flush;
+    82		BST<int> bst4;
+    83		bst4.insert(44);
+    84		assert( bst4.getHeight() == 1 );
+    85	      cout << " 7a " << flush;
+    86		bst4.insert(33);
+    87		assert( bst4.getHeight() == 2 );
+    88	      cout << " 7b " << flush;
+    89		bst4.insert(22);
+    90		assert( bst4.getHeight() == 3 );
+    91	      cout << " 7c " << flush;
+    92		bst4.insert(55);
+    93		assert( bst4.getHeight() == 3 );
+    94	      cout << " 7d " << flush;
+    95		BST<int> bst5;
+    96		bst5.insert(44);
+    97		assert( bst5.getHeight() == 1 );
+    98	      cout << " 8a " << flush;
+    99		bst5.insert(33);
+   100		assert( bst5.getHeight() == 2 );
+   101	      cout << " 8b " << flush;
+   102		bst5.insert(55);
+   103		assert( bst5.getHeight() == 2 );
+   104	      cout << " 8c " << flush;
+   105		bst5.insert(66);
+   106		assert( bst5.getHeight() == 3 );
+   107	      cout << " 8d " << flush;
+   108		BST<int> bst6;
+   109		bst6.insert(44);
+   110		assert( bst6.getHeight() == 1 );
+   111	      cout << " 9a " << flush;
+   112		bst6.insert(33);
+   113		assert( bst6.getHeight() == 2 );
+   114	      cout << " 9b " << flush;
+   115		bst6.insert(66);
+   116		assert( bst6.getHeight() == 2 );
+   117	      cout << " 9c " << flush;
+   118		bst6.insert(55);
+   119		assert( bst6.getHeight() == 3 );
+   120	      cout << " 9d " << flush;
+   121		cout << " Passed!" << endl;
+   122	}
+
+
+   123	void BST_Tester::testTraverse() {
+   124		cout << "Testing traverse()..." << endl;
+   125		BST<int> bst;
+   126		bst.insert(55);
+   127		bst.insert(33);
+   128		bst.insert(11);
+   129		bst.insert(22);
+   130		bst.insert(44);
+   131		bst.insert(77);
+   132		bst.insert(99);
+   133		bst.insert(88);
+   134		bst.insert(66);
+   135		cout << "- Preorder: expecting: 55 33 11 22 44 77 66 99 88" << endl;
+   136		cout << "- Got                :" << flush;
+   137		bst.traversePreorder(); cout << endl;
+   138		cout << "\n- Postorder: expecting: 22 11 44 33 66 88 99 77 55" << endl;
+   139		cout << "- Got                 :" << flush;
+   140		bst.traversePostorder(); cout << endl;
+   141		cout << "\n- Inorder: expecting: 11 22 33 44 55 66 77 88 99" << endl;
+   142		cout << "- Got               :" << flush;
+   143		bst.traverseInorder(); cout << endl;
+   144			cout << " Passed!" << endl;
+   145	}
+
+   146	void BST_Tester::testContains() {
+   147		cout << "Testing contains()... " << flush;
+   148		// empty bst
+   149		BST<int> bst;
+   150		assert( !bst.contains(55) );
+   151		cout << " 1 " << flush;
+   152		// non-empty bst
+   153		bst.insert(55);
+   154		assert( bst.contains(55) );
+   155		cout << " 2 " << flush;
+
+   156		bst.insert(33);
+   157		bst.insert(77);
+   158		assert( bst.contains(55) );
+   159		assert( bst.contains(33) );
+   160		assert( bst.contains(77) );
+   161		assert( !bst.contains(11) );
+   162		assert( !bst.contains(111) );
+   163		cout << " 3 " << flush;
+
+   164		bst.insert(11);
+   165		bst.insert(22);
+   166		bst.insert(44);
+   167		bst.insert(66);
+   168		bst.insert(88);
+   169		bst.insert(99);
+   170		for (int i = 1; i <= 100; i++) {
+   171			if ( i % 11 ) {
+   172				assert( !bst.contains(i) );
+   173			} else {
+   174				assert( bst.contains(i) );
+   175			}
+   176		}
+   177		cout << " 4 " << flush;
+
+   178		cout << " Passed!" << endl;
+   179	}
+
+   180	void BST_Tester::testInsert() {
+   181		cout << "Testing insert()... " << flush;
+   182		BST<int> bst;
+   183		assert( bst.isEmpty() );
+   184		cout << " 0 " << flush;
+   185		bst.insert(55);
+   186		assert( !bst.isEmpty() );
+   187		assert( bst.myRoot != NULL );
+   188		assert( bst.myRoot->myItem == 55 );
+   189		assert( bst.myRoot->myLeft == NULL );
+   190		assert( bst.myRoot->myRight == NULL );
+   191		assert( bst.getNumItems() == 1 );
+   192		cout << " 1 " << flush;
+
+   193		bst.insert(33);
+   194		assert( bst.getNumItems() == 2 );
+   195		assert( bst.myRoot->myRight == NULL );
+   196		assert( bst.myRoot->myLeft != NULL );
+   197		assert( bst.myRoot->myRight == NULL );
+   198		assert( bst.myRoot->myLeft->myItem == 33 );
+   199		cout << " 2 " << flush;
+
+   200		bst.insert(44);
+   201		assert( bst.getNumItems() == 3 );
+   202		assert( bst.myRoot->myRight == NULL );
+   203		assert( bst.myRoot->myLeft->myRight != NULL );
+   204		assert( bst.myRoot->myLeft->myRight->myItem == 44 );
+   205		cout << " 3 " << flush;
+
+   206		bst.insert(11);
+   207		assert( bst.getNumItems() == 4 );
+   208		assert( bst.myRoot->myRight == NULL );
+   209		assert( bst.myRoot->myLeft->myLeft != NULL );
+   210		assert( bst.myRoot->myLeft->myLeft->myItem == 11 );
+   211		cout << " 4 " << flush;
+
+   212		bst.insert(22);
+   213		assert( bst.getNumItems() == 5 );
+   214		assert( bst.myRoot->myRight == NULL );
+   215		assert( bst.myRoot->myLeft->myLeft->myRight != NULL );
+   216		assert( bst.myRoot->myLeft->myLeft->myRight->myItem == 22 );
+   217		cout << " 5 " << flush;
+
+   218		bst.insert(77);
+   219		assert( bst.getNumItems() == 6 );
+   220		assert( bst.myRoot->myRight != NULL );
+   221		assert( bst.myRoot->myRight->myItem == 77 );
+   222		cout << " 6 " << flush;
+
+   223		bst.insert(66);
+   224		assert( bst.getNumItems() == 7 );
+   225		assert( bst.myRoot->myRight->myLeft->myItem == 66 );
+   226		cout << " 7 " << flush;
+
+   227		bst.insert(99);
+   228		assert( bst.getNumItems() == 8 );
+   229		assert( bst.myRoot->myRight->myRight->myItem == 99 );
+   230		cout << " 8 " << flush;
+
+   231		bst.insert(88);
+   232		assert( bst.getNumItems() == 9 );
+   233		assert( bst.myRoot->myRight->myRight->myLeft->myItem == 88 );
+   234		cout << " 9 " << flush;
+
+   235		try {
+   236			bst.insert(55);
+   237		} catch (Exception& e) {
+   238			cout << " 10 " << flush;
+   239		}
+
+   240		try {
+   241			bst.insert(11);
+   242		} catch (Exception& e) {
+   243			cout << " 11 " << flush;
+   244		}
+
+   245		try {
+   246			bst.insert(88);
+   247		} catch (Exception& e) {
+   248			cout << " 12 " << flush;
+   249		}
+
+   250		bst.insert(111);
+   251		assert( bst.getNumItems() == 10 );
+   252		assert( bst.myRoot->myRight->myRight->myRight->myItem == 111 );
+   253		cout << " 13 " << flush;
+
+   254		cout << " Passed!" << endl;
+   255	}
+
+   256	void BST_Tester::testConstructor() {
+   257		cout << "Testing constructor... " << flush;
+   258		BST<int> bst;
+   259		assert( bst.isEmpty() );
+   260		assert( bst.getNumItems() == 0 );
+   261		assert( bst.myRoot == NULL );
+   262		assert( bst.myNumItems == 0 );
+   263		cout << "Passed!" << endl;
+   264	}
+
+djv78@gold25:/home/cs/112/current/djv78/proj09$ /cat -b BST_Tester.cpp              Exception.h 
+     1	/* Exception.h defines a class to consolidate the functionality
+     2	 *  that different kinds of exceptions have in common.
+     3	 * Joel Adams, for CS 112 at Calvin College.
+     4	 */
+
+     5	#ifndef EXCEPTION_H_
+     6	#define EXCEPTION_H_
+
+     7	#include <string>    // string
+     8	#include <iostream>  // ostream
+     9	using namespace std;
+
+    10	class Exception {
+    11	public:
+    12	   /* construct an Exception
+    13	    * Parameters: whereThrown, a string naming the method that threw me.
+    14	    *              message, a description of the problem.
+    15	    */
+    16	   Exception(const string& whereThrown, const string& message) { 
+    17	      myLocation = whereThrown; 
+    18	      myMessage = message; 
+    19	   }
+    20	   
+    21	   virtual ~Exception() {}
+    22	   
+    23	   /* build a string representation of myself
+    24	    * (polymorphic, in case you want to override it)
+    25	    */
+    26	   virtual string asString() const { 
+    27	   	  return "*** " + className() + " in " + myLocation + ": " + myMessage; 
+    28	   }
+    29	   
+    30	   /* polymorphic method to retrieve the name of the class
+    31	    *  (used by asString() above)
+    32	    */
+    33	   virtual string className() const {
+    34	   	  return "Exception";
+    35	   }
+
+    36	private:
+    37	   string myLocation;    // the method where I was thrown
+    38	   string myMessage;     // a description of the problem
+    39	};  // Exception
+
+    40	/* insert an Exception (or its subclass) into an ostream
+    41	 * Parameters: out, an ostream;
+    42	 *             e, an Exception.
+    43	 * Postcondition: out contains e's string representation
+    44	 *               && out is the return-value.
+    45	 */
+    46	inline ostream& operator<<(ostream& out, const Exception& e) {
+    47		out << e.asString();
+    48		return out;
+    49	}
+    50	      
+    51	#endif /*EXCEPTION_H_*/
+djv78@gold25:/home/cs/112/current/djv78/proj09$ cat -b Exception.h BST_Tester.cpp[2PException.h           periment.h
+     1	/* The header file for the BST height experiment
+     2	 * Experiment.h
+     3	 *
+     4	 *  Created on: Apr 27, 2019
+     5	 *      Author: Duncan Van Keulen (djv78)
+     6	 */
+
+     7	#ifndef EXPERIMENT_H_
+     8	#define EXPERIMENT_H_
+
+     9	#include <cstring>
+    10	#include <iostream>
+    11	#include <cassert>
+    12	#include <fstream>
+    13	#include <cstdlib>
+    14	#include "BST.h"
+    15	using namespace std;
+
+    16	class Experiment {
+    17	public:
+    18		void setFileName();
+    19		void run();
+    20		void loop();
+
+    21	private:
+    22		string myFile;
+    23		BST<long> myBST;
+    24	};
+
+    25	#endif /* EXPERIMENT_H_ */
+djv78@gold25:/home/cs/112/current/djv78/proj09$ cat -b Experiment.h  .cpp
+     1	/* The implementation file for the BST height experiment
+     2	 * Experiment.cpp
+     3	 *
+     4	 *  Created on: Apr 27, 2019
+     5	 *      Author: Duncan Van Keulen (djv78)
+     6	 */
+
+     7	#include "Experiment.h"
+
+     8	/* Set the file name of the Experiment object
+     9	 * precondition: Experiment must exist
+    10	 * postcondition: myFile will be set to the file the user enters
+    11	 */
+    12	void Experiment::setFileName() {
+    13		cout << "Enter name of file containing random integers: " << flush;
+    14		cin >> myFile;
+    15	}
+
+    16	/* Run the Experiment on myFile
+    17	 * Outputs the results to the console
+    18	 */
+    19	void Experiment::run() {
+    20		unsigned duplicates = 0;
+    21		long val;
+
+    22		ifstream fin( myFile.c_str() );
+    23		if ( !fin.is_open() ) {
+    24			cout << "Incorrect file name!" << endl;
+    25			setFileName();
+    26		}
+
+    27		assert( fin.is_open() );
+
+    28		while (fin) {
+    29			fin >> val;
+    30			try {
+    31				myBST.insert(val);
+    32			} catch (const Exception& bst) {
+    33				duplicates++;
+    34			}
+    35		}
+    36		// compensate for extra random duplicate that isn't actually there...
+    37		duplicates--;
+
+    38		// display the results
+    39		cout << "Ran experiment on " << myFile << endl
+    40				<< "BST height: " << myBST.getHeight() << endl
+    41				<< "Duplicates: " << duplicates << endl << endl;
+    42		fin.close();
+    43	}
+
+    44	/* Main execution loop
+    45	 * Ask the user if they want to continue, then
+    46	 * run the argument if the do, and repeat
+    47	 */
+    48	void Experiment::loop() {
+    49		string response;
+    50		cout << "Continue (y/n) " << flush;
+    51		cin >> response;
+    52		while (response != "n") {
+    53			myBST.~BST();
+    54			setFileName();
+    55			run();
+    56			cout << "Continue (y/n) " << flush;
+    57			cin >> response;
+    58		}
+    59		cout << "Goodbye" << flush;
+    60		exit(0);
+
+    61	}
+djv78@gold25:/home/cs/112/current/djv78/proj09$ cd de  E Debug/
+djv78@gold25:/home/cs/112/current/djv78/proj09/Debug$ ls
+BST_Tester.d  BST_Tester.o  Experiment.d  Experiment.o	makefile  objects.mk  proj09  sources.mk  subdir.mk  tester.d  tester.o
+djv78@gold25:/home/cs/112/current/djv78/proj09/Debug$ make all
+make: Nothing to be done for 'all'.
+djv78@gold25:/home/cs/112/current/djv78/proj09/Debug$ csd    d ..
+djv78@gold25:/home/cs/112/current/djv78/proj09$ ./Debug/proj09 
+Testing class BST
+Testing constructor... Passed!
+Testing insert()...  0  1  2  3  4  5  6  7  8  9  10  11  12  13  Passed!
+Testing contains()...  1  2  3  4  Passed!
+Testing traverse()...
+- Preorder: expecting: 55 33 11 22 44 77 66 99 88
+- Got                : 55 33 11 22 44 77 66 99 88
+
+- Postorder: expecting: 22 11 44 33 66 88 99 77 55
+- Got                 : 22 11 44 33 66 88 99 77 55
+
+- Inorder: expecting: 11 22 33 44 55 66 77 88 99
+- Got               : 11 22 33 44 55 66 77 88 99
+ Passed!
+Testing getHeight()... 0  1  2  3  4a  4b  4c  4d  4e  5a  5b  6a  6b  6c  6d  7a  7b  7c  7d  8a  8b  8c  8d  9a  9b  9c  9d  Passed!
+All tests passed!
+Continue (y/n) y
+Enter name of file containing random integers: /home/cs/112/current/        proj/09/randomItns01.txt
+Incorrect file name!
+Enter name of file containing random integers: ^[[A^[[B        /home/cs/11w3  2/proj/09/randomInts01.txt
+proj09: ../Experiment.cpp:32: void Experiment::run(): Assertion `fin.is_open()' failed.
+Aborted
+djv78@gold25:/home/cs/112/current/djv78/proj09$ ./Debug/proj09 
+Testing class BST
+Testing constructor... Passed!
+Testing insert()...  0  1  2  3  4  5  6  7  8  9  10  11  12  13  Passed!
+Testing contains()...  1  2  3  4  Passed!
+Testing traverse()...
+- Preorder: expecting: 55 33 11 22 44 77 66 99 88
+- Got                : 55 33 11 22 44 77 66 99 88
+
+- Postorder: expecting: 22 11 44 33 66 88 99 77 55
+- Got                 : 22 11 44 33 66 88 99 77 55
+
+- Inorder: expecting: 11 22 33 44 55 66 77 88 99
+- Got               : 11 22 33 44 55 66 77 88 99
+ Passed!
+Testing getHeight()... 0  1  2  3  4a  4b  4c  4d  4e  5a  5b  6a  6b  6c  6d  7a  7b  7c  7d  8a  8b  8c  8d  9a  9b  9c  9d  Passed!
+All tests passed!
+Continue (y/n) y
+Enter name of file containing random integers: /home/cs/11/ 2/proj- /-0  09/112   randomInts01.txt
+Ran experiment on /home/cs/112/proj/09/randomInts01.txt
+BST height: 47
+Duplicates: 0
+
+Continue (y/n) y
+Enter name of file containing random integers: ^^?  /home/cs/112/proj/09/randomInts01.txt^[[D^[[D^[[D                 2.txt
+Ran experiment on /home/cs/112/proj/09/randomInts02.txt
+BST height: 49
+Duplicates: 0
+
+Continue (y/n) y
+Enter name of file containing random integers: /home/cs/112/proj/09/randomInts01.txt     3.txt
+Ran experiment on /home/cs/112/proj/09/randomInts03.txt
+BST height: 47
+Duplicates: 0
+
+Continue (y/n) y
+Enter name of file containing random integers: ^[[A^[[A^[[B^[[B^[[B                    /home/cs/112/proj/09/randomInts01.txt     4.txt
+Ran experiment on /home/cs/112/proj/09/randomInts04.txt
+BST height: 51
+Duplicates: 0
+
+Continue (y/n) y
+Enter name of file containing random integers: ^^?  /home/cs/112/proj/09/randomInts01.txt      05.txt
+Ran experiment on /home/cs/112/proj/09/randomInts05.txt
+BST height: 48
+Duplicates: 0
+
+Continue (y/n) y
+Enter name of file containing random integers: ^[[A^[[A        /home/cs/112/proj/09/randomInts01.txt     6.txt
+Ran experiment on /home/cs/112/proj/09/randomInts06.txt
+BST height: 46
+Duplicates: 0
+
+Continue (y/n) y
+Enter name of file containing random integers: /home/cs/112/proj/09/randomInts01.txt     7.txt
+Ran experiment on /home/cs/112/proj/09/randomInts07.txt
+BST height: 47
+Duplicates: 0
+
+Continue (y/n) y
+Enter name of file containing random integers: /home/cs/112/proj/09/randomInts01.txt     8t  8.txt
+Ran experiment on /home/cs/112/proj/09/randomInts08.txt
+BST height: 51
+Duplicates: 0
+
+Continue (y/n) y
+Enter name of file containing random integers: /home/cs/112/proj/09/randomInts01.txt     9.txt
+Ran experiment on /home/cs/112/proj/09/randomInts09.txt
+BST height: 49
+Duplicates: 0
+
+Continue (y/n) y
+Enter name of file containing random integers: /home/cs/112/proj/09/randomInts01.txt      10.txt
+Ran experiment on /home/cs/112/proj/09/randomInts10.txt
+BST height: 49
+Duplicates: 0
+
+Continue (y/n) n
+Goodbyedjv78@gold25:/home/cs/112/current/djv78/proj09$ exit
+
+Script done on Mon 29 Apr 2019 06:59:59 PM EDT
